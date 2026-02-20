@@ -1,13 +1,19 @@
 import kivy
-
 from kivy.app import App
-from kivy.uix.label import Label
+from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
+
+Builder.load_file("interface.kv")
 
 
-class MyApp(App):
+class RootLayout(BoxLayout):
+    pass
+
+
+class PythonVisualizer(App):
     def build(self):
-        return Label(text="Hello, world!")
+        return RootLayout()
 
 
 if __name__ == "__main__":
-    MyApp().run()
+    PythonVisualizer().run()

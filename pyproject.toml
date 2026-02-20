@@ -1,7 +1,7 @@
 [project]
 name = "kivy-app-project"
 version = "0.1.0"
-description = "Final Project using kivy"
+description = "Final Project using kivy: Python code execution visualizer using kivy"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

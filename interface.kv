@@ -1,0 +1,40 @@
+#:kivy 2.0.0
+
+<EditorPanel@BoxLayout>:
+    orientation: 'vertical'
+    padding: 10
+    spacing: 10
+    
+    Label:
+        text: 'Python Code Editor'
+        size_hint_y: None
+        height: 30
+        font_name: 'RobotoMono-Regular'
+        font_size: '16sp'
+        bold: True
+        
+    TextInput:
+        id: code_input
+        text: ''
+        background_color: 0.1, 0.1, 0.1, 1
+        foreground_color: 0.9, 0.9, 0.9, 1
+        font_name: 'RobotoMono-Regular'
+        font_size: '14sp'
+        auto_indent: True
+        
+    BoxLayout:
+        size_hint_y: None
+        height: 50
+        spacing: 10
+        Button:
+            font_name: 'RobotoMono-Regular'
+            text: 'Visualize Execution'
+            background_color: 0.2, 0.6, 0.8, 1
+            
+                
+<RootLayout>:
+    orientation: 'horizontal'
+    
+    EditorPanel:
+        id: editor
+        size_hint_x: 0.4

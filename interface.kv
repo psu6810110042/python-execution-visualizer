@@ -48,7 +48,7 @@
     orientation: 'vertical'
     canvas.before:
         Color:
-            rgba: utils.get_color_from_hex('#1e1e1e')  # Main BG
+            rgba: utils.get_color_from_hex('#1e1e1e')  
         Rectangle:
             pos: self.pos
             size: self.size
@@ -71,7 +71,7 @@
                 width: 1
 
         PrimaryButton:
-            text: 'Run'
+            text: 'Run ->'
             size_hint_x: None
             width: '80dp'
 
@@ -102,6 +102,7 @@
                     value: 0
                     step: 1
                     cursor_size: ('15dp', '15dp')
+                    on_value: root.render_step(int(self.value))
                     
                 Label:
                     id: step_label
@@ -169,38 +170,83 @@
                 PanelTitle:
                     text: ' CODE EDITOR'
                     padding_x: '15dp'
-                CodeInput:
-                    id: code_input
-                    lexer: __import__('pygments.lexers.python').lexers.python.PythonLexer()
-                    text: ''
-                    background_color: utils.get_color_from_hex('#1e1e1e')
-                    foreground_color: utils.get_color_from_hex('#c9d1d9')
-                    cursor_color: utils.get_color_from_hex('#58a6ff')
-                    font_name: 'RobotoMono-Regular'
-                    font_size: '14sp'
-                    auto_indent: True
-                    readonly: False
+                BoxLayout:
+                    id: editor_wrapper
+                    orientation: 'horizontal'
+                    opacity: 1
+                    
+                    TextInput:
+                        id: line_numbers
+                        size_hint_x: None
+                        width: '55dp'
+                        text: '  1'
+                        readonly: True
+                        background_color: utils.get_color_from_hex('#1e1e1e')
+                        foreground_color: utils.get_color_from_hex('#6e7681')
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '14sp'
+                        halign: 'right'
+                        padding: [0, '10dp', '8dp', '10dp']
+                        cursor_color: (0, 0, 0, 0)
+                        scroll_y: code_input.scroll_y
+
+                    CodeInput:
+                        id: code_input
+                        lexer: __import__('pygments.lexers.python').lexers.python.PythonLexer()
+                        style_name: 'monokai'
+                        text: ''
+                        background_color: utils.get_color_from_hex('#1e1e1e')
+                        foreground_color: utils.get_color_from_hex('#c9d1d9')
+                        cursor_color: utils.get_color_from_hex('#58a6ff')
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '14sp'
+                        auto_indent: True
+                        readonly: False
+                        padding: ['15dp', '10dp']
 
                 ScrollView:
-                    id: trace_scroll
+                    id: trace_wrapper
                     do_scroll_x: True
                     do_scroll_y: True
                     opacity: 0
                     size_hint_y: None
                     height: 0
-                    Label:
-                        id: code_display
-                        text: ''
-                        markup: True
-                        color: utils.get_color_from_hex('#d4d4d4')
-                        text_size: None, None
+                    
+                    BoxLayout:
+                        orientation: 'horizontal'
                         size_hint: None, None
-                        size: self.texture_size
-                        halign: 'left'
-                        valign: 'top'
-                        font_name: 'RobotoMono-Regular'
-                        font_size: '14sp'
-                        padding: ['15dp', '10dp']
+                        height: max(trace_line_numbers.texture_size[1], code_display.texture_size[1])
+                        width: max(trace_wrapper.width, trace_line_numbers.width + code_display.texture_size[0])
+                        
+                        Label:
+                            id: trace_line_numbers
+                            size_hint: None, None
+                            size: '55dp', self.texture_size[1]
+                            text_size: self.width, None
+                            pos_hint: {'top': 1}
+                            text: ''
+                            color: utils.get_color_from_hex('#6e7681')
+                            font_name: 'RobotoMono-Regular'
+                            font_size: '14sp'
+                            halign: 'right'
+                            valign: 'top'
+                            padding: ['8dp', '8dp']
+                            markup: True
+
+                        Label:
+                            id: code_display
+                            text: ''
+                            markup: True
+                            color: utils.get_color_from_hex('#d4d4d4')
+                            text_size: max(self.width, self.texture_size[0]), None
+                            size_hint: None, None
+                            size: max(self.parent.width - trace_line_numbers.width, self.texture_size[0]), self.texture_size[1]
+                            pos_hint: {'top': 1}
+                            halign: 'left'
+                            valign: 'top'
+                            font_name: 'RobotoMono-Regular'
+                            font_size: '14sp'
+                            padding: ['15dp', '8dp']
 
             BoxLayout:
                 orientation: 'vertical'
@@ -218,7 +264,7 @@
                         width: 1
 
                 PanelTitle:
-                    text: ' TERMINAL '
+                    text: ' TERMINAL / OUTPUT'
                     padding_x: '15dp'
                     
                 ScrollView:
@@ -251,7 +297,7 @@
             DisplayPanel:
                 size_hint_y: 0.6
                 PanelTitle:
-                    text: ' VARIABLES '
+                    text: ' VARIABLES'
                     padding_x: '15dp'
                 ScrollView:
                     do_scroll_x: True
@@ -279,7 +325,7 @@
                         points: [self.x, self.top, self.right, self.top]
                         width: 1
                 PanelTitle:
-                    text: ' CALL STACK '
+                    text: ' CALL STACK'
                     padding_x: '15dp'
                 ScrollView:
                     do_scroll_x: True

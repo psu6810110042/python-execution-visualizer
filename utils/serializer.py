@@ -78,13 +78,26 @@ class Serializer:
                         result[k_str] = self._serialize_recursive(v, depth + 1, seen)
                 return result
 
+            # Functions / Modules
             if isinstance(
                 obj, (types.FunctionType, types.MethodType, types.ModuleType)
             ):
                 return f"<{type(obj).__name__} {obj.__name__}>"
 
+            # Generators / Iterators
             if isinstance(obj, types.GeneratorType):
                 return f"<generator {obj.__name__}>"
+
+            # Bytes / Bytearray
+            if isinstance(obj, bytes):
+                if len(obj) > 50:
+                    return f"b'{obj[:50].hex()}...' ({len(obj)} bytes)"
+                return f"b'{obj.hex()}'"
+
+            if isinstance(obj, bytearray):
+                if len(obj) > 50:
+                    return f"bytearray({len(obj)} bytes)"
+                return f"bytearray({list(obj)})"
 
             # fallback
             return str(obj)

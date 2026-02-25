@@ -97,3 +97,15 @@ class TestSerializer(unittest.TestCase):
 
         gen_res = self.serializer.serialize(string_yielder())
         self.assertEqual(gen_res, "<generator string_yielder>")
+
+    def test_bytes_and_bytearray(self):
+        b = b"hello"
+        self.assertEqual(self.serializer.serialize(b), "b'68656c6c6f'")
+
+        # Test large bytes truncation
+        long_b = b"x" * 60
+        res = self.serializer.serialize(long_b)
+        self.assertTrue(res.endswith("...' (60 bytes)"))
+
+        ba = bytearray([1, 2, 3])
+        self.assertEqual(self.serializer.serialize(ba), "bytearray([1, 2, 3])")

@@ -80,3 +80,13 @@ class TestSerializer(unittest.TestCase):
         nested = [[[[[1]]]]]
         result = self.serializer.serialize(nested)
         self.assertEqual(result, [[[["list(...)"]]]])
+
+    def test_functions_and_modules(self):
+        def my_test_func():
+            pass
+
+        func_res = self.serializer.serialize(my_test_func)
+        self.assertEqual(func_res, "<function my_test_func>")
+
+        mod_res = self.serializer.serialize(sys)
+        self.assertEqual(mod_res, "<module sys>")

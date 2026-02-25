@@ -1,3 +1,6 @@
+import types
+
+
 class Serializer:
     def __init__(self, max_depth=3, max_length=20):
         self.max_depth = max_depth
@@ -74,6 +77,11 @@ class Serializer:
                         k_str = str(k)
                         result[k_str] = self._serialize_recursive(v, depth + 1, seen)
                 return result
+
+            if isinstance(
+                obj, (types.FunctionType, types.MethodType, types.ModuleType)
+            ):
+                return f"<{type(obj).__name__} {obj.__name__}>"
 
             # fallback
             return str(obj)

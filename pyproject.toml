@@ -13,3 +13,8 @@ dependencies = [
     "kivy-deps-sdl2>=0.8.0",
     "pygments>=2.19.2",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.0.0",
+]

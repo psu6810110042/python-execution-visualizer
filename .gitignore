@@ -11,3 +11,4 @@ wheels/
 
 /.pytest_cache
 /.reference
+implementation_plan.md

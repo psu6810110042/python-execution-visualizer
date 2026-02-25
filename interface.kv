@@ -79,8 +79,9 @@
             DisplayPanel:
                 PanelTitle:
                     text: 'Editor (Input)'
-                TextInput:
+                CodeInput:
                     id: code_input
+                    lexer: __import__('pygments.lexers.python').lexers.python.PythonLexer()
                     text: '# Sample code\nx = 5\ny = 10\ntotal = x + y\nprint("Total:", total)'
                     background_color: utils.get_color_from_hex('#0d1117')
                     foreground_color: utils.get_color_from_hex('#c9d1d9')

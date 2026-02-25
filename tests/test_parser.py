@@ -47,6 +47,31 @@ obj = MyClass(f)
         with self.assertRaises(IndentationError):
             CodeParser.parse(code)
 
+    def test_validate_empty_code(self):
+        warnings = CodeParser.validate("")
+        self.assertEqual(warnings, [])
+
+    def test_validate_returns_warnings_list(self):
+        code = "x = 1"
+        warnings = CodeParser.validate(code)
+        self.assertIsInstance(warnings, list)
+
+    def test_validate_eval_detected(self):
+        code = "x = eval('1 + 1')"
+        warnings = CodeParser.validate(code)
+        self.assertTrue(any("'eval' detected" in w for w in warnings))
+
+    def test_validate_long_function_name(self):
+        long_name = "a" * 51
+        code = f"def {long_name}():\n    pass"
+        warnings = CodeParser.validate(code)
+        self.assertTrue(any("is too long" in w for w in warnings))
+
+    def test_validate_syntax_error_returns_warning(self):
+        code = "invalid python code"
+        warnings = CodeParser.validate(code)
+        self.assertTrue(any("Syntax Error" in w for w in warnings))
+
 
 if __name__ == "__main__":
     unittest.main()

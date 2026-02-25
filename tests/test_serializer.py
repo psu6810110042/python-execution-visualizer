@@ -90,3 +90,10 @@ class TestSerializer(unittest.TestCase):
 
         mod_res = self.serializer.serialize(sys)
         self.assertEqual(mod_res, "<module sys>")
+
+    def test_generators(self):
+        def string_yielder():
+            yield "a"
+
+        gen_res = self.serializer.serialize(string_yielder())
+        self.assertEqual(gen_res, "<generator string_yielder>")

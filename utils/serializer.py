@@ -83,6 +83,9 @@ class Serializer:
             ):
                 return f"<{type(obj).__name__} {obj.__name__}>"
 
+            if isinstance(obj, types.GeneratorType):
+                return f"<generator {obj.__name__}>"
+
             # fallback
             return str(obj)
 

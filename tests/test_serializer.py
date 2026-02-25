@@ -7,6 +7,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from utils.serializer import Serializer
 
 
+# dummy class to test if it works / stub points????
+class DummyClass:
+    def __init__(self, val=None):
+        self.val = val
+
+
 class TestSerializer(unittest.TestCase):
     def setUp(self):
         self.serializer = Serializer(max_depth=3, max_length=5)
@@ -109,3 +115,16 @@ class TestSerializer(unittest.TestCase):
 
         ba = bytearray([1, 2, 3])
         self.assertEqual(self.serializer.serialize(ba), "bytearray([1, 2, 3])")
+
+    def test_range(self):
+        r = range(2, 20, 3)
+        self.assertEqual(self.serializer.serialize(r), "range(2, 20, 3)")
+
+    def test_custom_objects(self):
+        obj = DummyClass(100)
+        result = self.serializer.serialize(obj)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["__type"], "DummyClass")
+        self.assertIn("__id", result)
+        self.assertIn("attributes", result)
+        self.assertEqual(result["attributes"]["val"], 100)

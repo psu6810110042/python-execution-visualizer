@@ -99,6 +99,22 @@ class Serializer:
                     return f"bytearray({len(obj)} bytes)"
                 return f"bytearray({list(obj)})"
 
+            # Range objects
+            if isinstance(obj, range):
+                return f"range({obj.start}, {obj.stop}, {obj.step})"
+
+            # Custom Objects
+            if hasattr(obj, "__dict__"):
+
+                return {
+                    "__type": type(obj).__name__,
+                    "__id": hex(obj_id),
+                    "repr": str(obj),
+                    "attributes": self._serialize_recursive(
+                        obj.__dict__, depth + 1, seen
+                    ),
+                }
+
             # fallback
             return str(obj)
 

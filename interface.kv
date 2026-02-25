@@ -3,46 +3,52 @@
 
 <DarkButton@Button>:
     background_normal: ''
-    background_color: utils.get_color_from_hex('#2d3748')
-    color: 1, 1, 1, 1
-    font_name: 'Roboto'
-    bold: True
-    canvas.before:
-        Color:
-            rgba: utils.get_color_from_hex('#4a5568') if self.state == 'down' else self.background_color
-        RoundedRectangle:
-            pos: self.pos
-            size: self.size
-            radius: [5,]
+    background_color: utils.get_color_from_hex('#383838')
+    color: utils.get_color_from_hex('#eeeeee')
+    font_size: '13sp'
+    size_hint_y: None
+    height: '30dp'
+    size_hint_x: None
+    width: '80dp'
+
+<PrimaryButton@DarkButton>:
+    background_color: utils.get_color_from_hex('#0e639c')
 
 <PanelTitle@Label>:
     size_hint_y: None
-    height: '30dp'
-    font_name: 'Roboto'
-    font_size: '16sp'
-    bold: True
-    color: utils.get_color_from_hex('#a0aec0')
+    height: '25dp'
     text_size: self.size
     halign: 'left'
     valign: 'middle'
-    padding_x: '10dp'
+    font_size: '11sp'
+    bold: True
+    color: utils.get_color_from_hex('#858585')
+    canvas.before:
+        Color:
+            rgba: utils.get_color_from_hex('#252526')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: utils.get_color_from_hex('#2d2d2d')
+        Line:
+            points: [self.x, self.y, self.right, self.y]
+            width: 1
 
 <DisplayPanel@BoxLayout>:
     orientation: 'vertical'
     canvas.before:
         Color:
-            rgba: utils.get_color_from_hex('#1a202c')
-        RoundedRectangle:
+            rgba: utils.get_color_from_hex('#252526')
+        Rectangle:
             pos: self.pos
             size: self.size
-            radius: [8,]
-    padding: '5dp'
-    
+
 <RootLayout>:
     orientation: 'vertical'
     canvas.before:
         Color:
-            rgba: utils.get_color_from_hex('#0d1117')
+            rgba: utils.get_color_from_hex('#1e1e1e')  # Main BG
         Rectangle:
             pos: self.pos
             size: self.size
@@ -50,161 +56,244 @@
     BoxLayout:
         size_hint_y: None
         height: '50dp'
-        padding: '10dp'
+        padding: ['15dp', '10dp']
+        spacing: '15dp'
         canvas.before:
             Color:
-                rgba: utils.get_color_from_hex('#161b22')
+                rgba: utils.get_color_from_hex('#333333')
             Rectangle:
                 pos: self.pos
                 size: self.size
-        Label:
-            text: 'Python Code Visualizer'
-            font_size: '20sp'
-            bold: True
-            color: utils.get_color_from_hex('#58a6ff')
-            text_size: self.size
-            halign: 'left'
-            valign: 'middle'
+            Color:
+                rgba: utils.get_color_from_hex('#3e3e42')
+            Line:
+                points: [self.x, self.y, self.right, self.y]
+                width: 1
 
-    BoxLayout:
-        orientation: 'horizontal'
-        padding: '10dp'
-        spacing: '10dp'
+        PrimaryButton:
+            text: 'Run'
+            size_hint_x: None
+            width: '80dp'
 
         BoxLayout:
             orientation: 'vertical'
-            size_hint_x: 0.35
-            spacing: '10dp'
+            size_hint_x: 1
+            
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: '5dp'
+                
+                DarkButton:
+                    text: '<'
+                    width: '30dp'
+                    
+                PrimaryButton:
+                    id: btn_play
+                    text: 'Play'
+                    
+                DarkButton:
+                    text: '>'
+                    width: '30dp'
+                    
+                Slider:
+                    id: step_scrubber
+                    min: 0
+                    max: 0
+                    value: 0
+                    step: 1
+                    cursor_size: ('15dp', '15dp')
+                    
+                Label:
+                    id: step_label
+                    text: '0 / 0'
+                    font_name: 'RobotoMono-Regular'
+                    font_size: '12sp'
+                    color: utils.get_color_from_hex('#858585')
+                    size_hint_x: None
+                    width: '60dp'
+                    text_size: self.size
+                    halign: 'right'
+                    valign: 'middle'
 
-            DisplayPanel:
+        BoxLayout:
+            size_hint_x: None
+            width: '200dp'
+            spacing: '10dp'
+            Label:
+                text: 'Speed:'
+                font_size: '12sp'
+                color: utils.get_color_from_hex('#888888')
+                size_hint_x: None
+                width: '40dp'
+            Slider:
+                id: speed_slider
+                min: 0.1
+                max: 2.0
+                value: 1.0
+
+
+    Label:
+        id: error_banner
+        size_hint_y: None
+        height: '0dp'
+        text: ''
+        markup: True
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+        color: utils.get_color_from_hex('#ffdddd')
+        canvas.before:
+            Color:
+                rgba: utils.get_color_from_hex('#5a1d1d')
+            Rectangle:
+                pos: self.pos
+                size: self.size
+            Color:
+                rgba: utils.get_color_from_hex('#ff0000')
+            Line:
+                points: [self.x, self.y, self.right, self.y]
+                width: 1
+
+    BoxLayout:
+        orientation: 'horizontal'
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.6
+            
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: 0.7
+                background_color: utils.get_color_from_hex('#1e1e1e')
+                
                 PanelTitle:
-                    text: 'Editor (Input)'
+                    text: ' CODE EDITOR'
+                    padding_x: '15dp'
                 CodeInput:
                     id: code_input
                     lexer: __import__('pygments.lexers.python').lexers.python.PythonLexer()
-                    text: '# Sample code\nx = 5\ny = 10\ntotal = x + y\nprint("Total:", total)'
-                    background_color: utils.get_color_from_hex('#0d1117')
+                    text: ''
+                    background_color: utils.get_color_from_hex('#1e1e1e')
                     foreground_color: utils.get_color_from_hex('#c9d1d9')
                     cursor_color: utils.get_color_from_hex('#58a6ff')
                     font_name: 'RobotoMono-Regular'
                     font_size: '14sp'
                     auto_indent: True
-                    padding: ['10dp', '10dp']
+                    readonly: False
+
+                ScrollView:
+                    id: trace_scroll
+                    do_scroll_x: True
+                    do_scroll_y: True
+                    opacity: 0
+                    size_hint_y: None
+                    height: 0
+                    Label:
+                        id: code_display
+                        text: ''
+                        markup: True
+                        color: utils.get_color_from_hex('#d4d4d4')
+                        text_size: None, None
+                        size_hint: None, None
+                        size: self.texture_size
+                        halign: 'left'
+                        valign: 'top'
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '14sp'
+                        padding: ['15dp', '10dp']
 
             BoxLayout:
-                size_hint_y: None
-                height: '40dp'
-                spacing: '10dp'
-                DarkButton:
-                    text: 'Start Visualization'
-                    background_color: utils.get_color_from_hex('#238636')
+                orientation: 'vertical'
+                size_hint_y: 0.3
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#181818')
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+                    Color:
+                        rgba: utils.get_color_from_hex('#3e3e42')
+                    Line:
+                        points: [self.x, self.top, self.right, self.top]
+                        width: 1
+
+                PanelTitle:
+                    text: ' TERMINAL '
+                    padding_x: '15dp'
+                    
+                ScrollView:
+                    do_scroll_x: True
+                    do_scroll_y: True
+                    Label:
+                        id: output_display
+                        text: ''
+                        color: utils.get_color_from_hex('#dcdcdc')
+                        text_size: None, None
+                        size_hint: None, None
+                        size: self.texture_size
+                        halign: 'left'
+                        valign: 'top'
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '13sp'
+                        padding: ['10dp', '10dp']
+
 
         BoxLayout:
             orientation: 'vertical'
-            size_hint_x: 0.65
-            spacing: '10dp'
+            size_hint_x: 0.4
+            canvas.before:
+                Color:
+                    rgba: utils.get_color_from_hex('#3e3e42')
+                Line:
+                    points: [self.x, self.y, self.x, self.top]
+                    width: 1
 
-            BoxLayout:
-                size_hint_y: None
-                height: '40dp'
-                spacing: '10dp'
-                
-                DarkButton:
-                    id: btn_prev
-                    text: '<'
-                    size_hint_x: None
-                    width: '40dp'
-                DarkButton:
-                    id: btn_play
-                    text: 'Play'
-                    size_hint_x: None
-                    width: '60dp'
-                    background_color: utils.get_color_from_hex('#0e639c')
-                DarkButton:
-                    id: btn_next
-                    text: '>'
-                    size_hint_x: None
-                    width: '40dp'
-                    
-                Slider:
-                    id: step_scrubber
-                    min: 0
-                    max: 100
-                    value: 0
-                    cursor_size: ('20dp', '20dp')
-                    
-                Label:
-                    id: step_label
-                    text: '0 / 0'
-                    size_hint_x: None
-                    width: '60dp'
-                    color: utils.get_color_from_hex('#8b949e')
-                    font_name: 'RobotoMono-Regular'
+            DisplayPanel:
+                size_hint_y: 0.6
+                PanelTitle:
+                    text: ' VARIABLES '
+                    padding_x: '15dp'
+                ScrollView:
+                    do_scroll_x: True
+                    do_scroll_y: True
+                    Label:
+                        id: variable_display
+                        text: ''
+                        color: utils.get_color_from_hex('#cccccc')
+                        text_size: None, None
+                        size_hint: None, None
+                        size: self.texture_size
+                        halign: 'left'
+                        valign: 'top'
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '13sp'
+                        padding: ['10dp', '10dp']
+                        markup: True
 
-            GridLayout:
-                cols: 2
-                spacing: '10dp'
-
-                DisplayPanel:
-                    PanelTitle:
-                        text: 'Execution Trace'
-                    ScrollView:
-                        Label:
-                            id: code_display
-                            text: 'Code execution will appear here...'
-                            color: utils.get_color_from_hex('#8b949e')
-                            text_size: self.width, None
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                            halign: 'left'
-                            valign: 'top'
-                            font_name: 'RobotoMono-Regular'
-                            padding: ['10dp', '10dp']
-
-                DisplayPanel:
-                    PanelTitle:
-                        text: 'Variables'
-                    ScrollView:
-                        Label:
-                            id: variable_display
-                            text: 'Variables will appear here...'
-                            color: utils.get_color_from_hex('#8b949e')
-                            text_size: self.width, None
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                            halign: 'left'
-                            valign: 'top'
-                            font_name: 'RobotoMono-Regular'
-                            padding: ['10dp', '10dp']
-
-                DisplayPanel:
-                    PanelTitle:
-                        text: 'Memory / Call Stack'
-                    ScrollView:
-                        Label:
-                            id: memory_display
-                            text: 'Memory info will appear here...'
-                            color: utils.get_color_from_hex('#8b949e')
-                            text_size: self.width, None
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                            halign: 'left'
-                            valign: 'top'
-                            font_name: 'RobotoMono-Regular'
-                            padding: ['10dp', '10dp']
-
-                DisplayPanel:
-                    PanelTitle:
-                        text: 'Console Output'
-                    ScrollView:
-                        Label:
-                            id: output_display
-                            text: 'Console output will appear here...'
-                            color: utils.get_color_from_hex('#8b949e')
-                            text_size: self.width, None
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                            halign: 'left'
-                            valign: 'top'
-                            font_name: 'RobotoMono-Regular'
-                            padding: ['10dp', '10dp']
+            DisplayPanel:
+                size_hint_y: 0.4
+                canvas.before:
+                    Color:
+                        rgba: utils.get_color_from_hex('#3e3e42')
+                    Line:
+                        points: [self.x, self.top, self.right, self.top]
+                        width: 1
+                PanelTitle:
+                    text: ' CALL STACK '
+                    padding_x: '15dp'
+                ScrollView:
+                    do_scroll_x: True
+                    do_scroll_y: True
+                    Label:
+                        id: memory_display
+                        text: ''
+                        color: utils.get_color_from_hex('#aaaaaa')
+                        text_size: None, None
+                        size_hint: None, None
+                        size: self.texture_size
+                        halign: 'left'
+                        valign: 'top'
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '13sp'
+                        padding: ['12dp', '6dp']
+                        markup: True

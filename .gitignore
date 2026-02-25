@@ -5,12 +5,10 @@ build/
 dist/
 wheels/
 *.egg-info
+.ruff_cache
 
 # Virtual environments
 .venv
 
 /.pytest_cache
 /.reference
-implementation_plan.md
-
-test_*.py

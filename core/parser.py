@@ -2,7 +2,6 @@ import ast
 
 
 class CodeParser:
-
     @staticmethod
     def parse(code: str):
         try:

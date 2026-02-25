@@ -12,7 +12,6 @@ class Serializer:
 
     # private function to serialize objects
     def _serialize_recursive(self, obj, depth, seen):
-
         # recursively go through the object
         obj_id = id(obj)
         if obj_id in seen:
@@ -110,7 +109,6 @@ class Serializer:
 
             # Custom Objects
             if hasattr(obj, "__dict__"):
-
                 return {
                     "__type": type(obj).__name__,
                     "__id": hex(obj_id),

@@ -1,4 +1,5 @@
 import types
+import sys
 
 
 class Serializer:
@@ -20,6 +21,10 @@ class Serializer:
         # pls stop killing my cpu
         if depth > self.max_depth:
             return str(type(obj).__name__) + "(...)"
+
+        # memory bomb check (1MB limit)
+        if sys.getsizeof(obj, 0) > 1024 * 1024:
+            return "<Data too large to visualize>"
 
         try:
             # Primitives

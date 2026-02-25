@@ -128,3 +128,75 @@ class TestSerializer(unittest.TestCase):
         self.assertIn("__id", result)
         self.assertIn("attributes", result)
         self.assertEqual(result["attributes"]["val"], 100)
+
+    def test_circular_custom_objects(self):
+        local_serializer = Serializer(max_depth=5)
+
+        obj1 = DummyClass(1)
+        obj2 = DummyClass(2)
+        obj1.other = obj2
+        obj2.other = obj1
+
+        result = local_serializer.serialize(obj1)
+        self.assertEqual(result["attributes"]["val"], 1)
+
+        other_attr = result["attributes"]["other"]
+        self.assertEqual(other_attr["attributes"]["val"], 2)
+        self.assertTrue(
+            other_attr["attributes"]["other"].startswith("<Circular Reference ")
+        )
+
+    def test_empty_containers(self):
+        self.assertEqual(self.serializer.serialize([]), [])
+        self.assertEqual(self.serializer.serialize(()), [])
+        self.assertEqual(self.serializer.serialize({}), {})
+
+        res = self.serializer.serialize(set())
+        self.assertEqual(res["__type"], "set")
+        self.assertEqual(res["items"], [])
+
+    def test_exact_max_length(self):
+        # exact max length is 5
+        l = [1, 2, 3, 4, 5]
+        self.assertEqual(len(self.serializer.serialize(l)), 5)
+        self.assertEqual(self.serializer.serialize(l), [1, 2, 3, 4, 5])
+
+        s = {1, 2, 3, 4, 5}
+        self.assertEqual(len(self.serializer.serialize(s)["items"]), 5)
+
+        d = {str(i): i for i in range(5)}
+        self.assertEqual(len(self.serializer.serialize(d)), 5)
+        self.assertNotIn("__truncated", self.serializer.serialize(d))
+
+    def test_complex_numbers(self):
+        c = 1 + 2j
+        # complex hits the fallback str(obj)
+        self.assertEqual(self.serializer.serialize(c), "(1+2j)")
+
+    def test_classes_and_instances(self):
+        res = self.serializer.serialize(DummyClass)
+        self.assertIsInstance(res, dict)
+        self.assertEqual(res["__type"], "type")
+        self.assertTrue(isinstance(res["repr"], str))
+
+    def test_methods_and_builtins(self):
+        obj = DummyClass()
+        res_method = self.serializer.serialize(obj.__init__)
+        self.assertEqual(res_method, "<method __init__>")
+
+        res_builtin = self.serializer.serialize(len)
+        self.assertEqual(res_builtin, "<built-in function len>")
+
+    def test_exception_during_serialization(self):
+        class ExplodingClass:
+            @property
+            def __dict__(self):
+                raise ValueError("Boom!")
+
+        obj = ExplodingClass()
+        res = self.serializer.serialize(obj)
+        self.assertTrue(res.startswith("<Serialization Error: "))
+
+
+if __name__ == "__main__":
+    unittest.main()

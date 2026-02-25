@@ -24,6 +24,41 @@ class RootLayout(MDBoxLayout):
         self._original_code = ""
         self.play_event = None
 
+        Window.bind(on_keyboard=self._on_keyboard)
+
+    def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
+        if key == 13 and "ctrl" in modifiers:
+            self.start_visualization(self.ids.btn_run)
+            return True
+
+        if not self.ids.code_input.readonly:
+            return False
+
+        if key == 32:
+            if self.trace_data:
+                self.toggle_play(self.ids.btn_play)
+            return True
+
+        elif key == 275:
+            self.step_visualization(1)
+            return True
+
+        elif key == 276:
+            self.step_visualization(-1)
+            return True
+
+        elif key == 273:
+            slider = self.ids.speed_slider
+            slider.value = min(slider.max, round(slider.value + 0.1, 1))
+            return True
+
+        elif key == 274:
+            slider = self.ids.speed_slider
+            slider.value = max(slider.min, round(slider.value - 0.1, 1))
+            return True
+
+        return False
+
     def on_kv_post(self, base_widget):
         default_code = '# Write Python here\ndef foo():\n    print("test")\nfoo()'
 
@@ -89,6 +124,7 @@ class RootLayout(MDBoxLayout):
 
         self._original_code = code
         self.ids.code_input.readonly = True
+        self.ids.code_input.focus = False
 
         self.ids.editor_wrapper.opacity = 0
         self.ids.editor_wrapper.size_hint_y = None

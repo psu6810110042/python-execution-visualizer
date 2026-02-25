@@ -1,40 +1,209 @@
 #:kivy 2.0.0
+#:import utils kivy.utils
 
-<EditorPanel@BoxLayout>:
+<DarkButton@Button>:
+    background_normal: ''
+    background_color: utils.get_color_from_hex('#2d3748')
+    color: 1, 1, 1, 1
+    font_name: 'Roboto'
+    bold: True
+    canvas.before:
+        Color:
+            rgba: utils.get_color_from_hex('#4a5568') if self.state == 'down' else self.background_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [5,]
+
+<PanelTitle@Label>:
+    size_hint_y: None
+    height: '30dp'
+    font_name: 'Roboto'
+    font_size: '16sp'
+    bold: True
+    color: utils.get_color_from_hex('#a0aec0')
+    text_size: self.size
+    halign: 'left'
+    valign: 'middle'
+    padding_x: '10dp'
+
+<DisplayPanel@BoxLayout>:
     orientation: 'vertical'
-    padding: 10
-    spacing: 10
+    canvas.before:
+        Color:
+            rgba: utils.get_color_from_hex('#1a202c')
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [8,]
+    padding: '5dp'
     
-    Label:
-        text: 'Python Code Editor'
-        size_hint_y: None
-        height: 30
-        font_name: 'RobotoMono-Regular'
-        font_size: '16sp'
-        bold: True
-        
-    TextInput:
-        id: code_input
-        text: ''
-        background_color: 0.1, 0.1, 0.1, 1
-        foreground_color: 0.9, 0.9, 0.9, 1
-        font_name: 'RobotoMono-Regular'
-        font_size: '14sp'
-        auto_indent: True
-        
+<RootLayout>:
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: utils.get_color_from_hex('#0d1117')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         size_hint_y: None
-        height: 50
-        spacing: 10
-        Button:
-            font_name: 'RobotoMono-Regular'
-            text: 'Visualize Execution'
-            background_color: 0.2, 0.6, 0.8, 1
-            
+        height: '50dp'
+        padding: '10dp'
+        canvas.before:
+            Color:
+                rgba: utils.get_color_from_hex('#161b22')
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: 'Python Code Visualizer'
+            font_size: '20sp'
+            bold: True
+            color: utils.get_color_from_hex('#58a6ff')
+            text_size: self.size
+            halign: 'left'
+            valign: 'middle'
+
+    BoxLayout:
+        orientation: 'horizontal'
+        padding: '10dp'
+        spacing: '10dp'
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.35
+            spacing: '10dp'
+
+            DisplayPanel:
+                PanelTitle:
+                    text: 'Editor (Input)'
+                TextInput:
+                    id: code_input
+                    text: '# Sample code\nx = 5\ny = 10\ntotal = x + y\nprint("Total:", total)'
+                    background_color: utils.get_color_from_hex('#0d1117')
+                    foreground_color: utils.get_color_from_hex('#c9d1d9')
+                    cursor_color: utils.get_color_from_hex('#58a6ff')
+                    font_name: 'RobotoMono-Regular'
+                    font_size: '14sp'
+                    auto_indent: True
+                    padding: ['10dp', '10dp']
+
+            BoxLayout:
+                size_hint_y: None
+                height: '40dp'
+                spacing: '10dp'
+                DarkButton:
+                    text: 'Start Visualization'
+                    background_color: utils.get_color_from_hex('#238636')
+
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_x: 0.65
+            spacing: '10dp'
+
+            BoxLayout:
+                size_hint_y: None
+                height: '40dp'
+                spacing: '10dp'
                 
-<RootLayout>:
-    orientation: 'horizontal'
-    
-    EditorPanel:
-        id: editor
-        size_hint_x: 0.4
+                DarkButton:
+                    id: btn_prev
+                    text: '<'
+                    size_hint_x: None
+                    width: '40dp'
+                DarkButton:
+                    id: btn_play
+                    text: 'Play'
+                    size_hint_x: None
+                    width: '60dp'
+                    background_color: utils.get_color_from_hex('#0e639c')
+                DarkButton:
+                    id: btn_next
+                    text: '>'
+                    size_hint_x: None
+                    width: '40dp'
+                    
+                Slider:
+                    id: step_scrubber
+                    min: 0
+                    max: 100
+                    value: 0
+                    cursor_size: ('20dp', '20dp')
+                    
+                Label:
+                    id: step_label
+                    text: '0 / 0'
+                    size_hint_x: None
+                    width: '60dp'
+                    color: utils.get_color_from_hex('#8b949e')
+                    font_name: 'RobotoMono-Regular'
+
+            GridLayout:
+                cols: 2
+                spacing: '10dp'
+
+                DisplayPanel:
+                    PanelTitle:
+                        text: 'Execution Trace'
+                    ScrollView:
+                        Label:
+                            id: code_display
+                            text: 'Code execution will appear here...'
+                            color: utils.get_color_from_hex('#8b949e')
+                            text_size: self.width, None
+                            size_hint_y: None
+                            height: self.texture_size[1]
+                            halign: 'left'
+                            valign: 'top'
+                            font_name: 'RobotoMono-Regular'
+                            padding: ['10dp', '10dp']
+
+                DisplayPanel:
+                    PanelTitle:
+                        text: 'Variables'
+                    ScrollView:
+                        Label:
+                            id: variable_display
+                            text: 'Variables will appear here...'
+                            color: utils.get_color_from_hex('#8b949e')
+                            text_size: self.width, None
+                            size_hint_y: None
+                            height: self.texture_size[1]
+                            halign: 'left'
+                            valign: 'top'
+                            font_name: 'RobotoMono-Regular'
+                            padding: ['10dp', '10dp']
+
+                DisplayPanel:
+                    PanelTitle:
+                        text: 'Memory / Call Stack'
+                    ScrollView:
+                        Label:
+                            id: memory_display
+                            text: 'Memory info will appear here...'
+                            color: utils.get_color_from_hex('#8b949e')
+                            text_size: self.width, None
+                            size_hint_y: None
+                            height: self.texture_size[1]
+                            halign: 'left'
+                            valign: 'top'
+                            font_name: 'RobotoMono-Regular'
+                            padding: ['10dp', '10dp']
+
+                DisplayPanel:
+                    PanelTitle:
+                        text: 'Console Output'
+                    ScrollView:
+                        Label:
+                            id: output_display
+                            text: 'Console output will appear here...'
+                            color: utils.get_color_from_hex('#8b949e')
+                            text_size: self.width, None
+                            size_hint_y: None
+                            height: self.texture_size[1]
+                            halign: 'left'
+                            valign: 'top'
+                            font_name: 'RobotoMono-Regular'
+                            padding: ['10dp', '10dp']

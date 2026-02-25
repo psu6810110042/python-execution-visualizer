@@ -22,10 +22,9 @@ class RootLayout(MDBoxLayout):
         self.current_step = 0
         self.is_playing = False
         self._original_code = ""
-        self.play_event = None  # Explicitly initialize the clock event
+        self.play_event = None
 
     def on_kv_post(self, base_widget):
-        """Called automatically after KV file finishes loading."""
         default_code = '# Write Python here\ndef foo():\n    print("test")\nfoo()'
 
         self.ids.code_input.text = default_code
@@ -48,10 +47,8 @@ class RootLayout(MDBoxLayout):
             self.ids.line_numbers.text = nums
 
     def start_visualization(self, instance):
-        """Parse code and generate the trace."""
         btn_text = self.ids.btn_run_text.text
 
-        # --- STOP EDIT MODE (Reverting to Editor) ---
         if btn_text == "Stop Edit":
             self.ids.code_input.readonly = False
             self.ids.editor_wrapper.opacity = 1
@@ -83,7 +80,6 @@ class RootLayout(MDBoxLayout):
             self.ids.error_banner.text = ""
             return
 
-        # --- RUN MODE (Starting Visualization) ---
         code = self.ids.code_input.text
         if not code.strip():
             return
@@ -111,11 +107,9 @@ class RootLayout(MDBoxLayout):
         self.ids.btn_run_icon.icon = "stop-circle"
         instance.md_bg_color = get_color_from_hex("#da3633")
 
-        # Run execution in a background thread to prevent GUI freezing
         threading.Thread(target=self._run_in_thread, args=(code,), daemon=True).start()
 
     def _run_in_thread(self, code):
-        """Executes the user code in a background thread."""
         try:
             executor = Executor(code=code, timeout=5.0)
             result = executor.execute()
@@ -140,7 +134,6 @@ class RootLayout(MDBoxLayout):
 
         self.render_step(0)
 
-        # Auto-play on success
         if not self.is_playing:
             self.toggle_play(None)
 
@@ -149,22 +142,18 @@ class RootLayout(MDBoxLayout):
         self.ids.output_display.text = f"Execution Error: {err_msg}"
 
     def render_step(self, step_idx):
-        """Update all displays based on the trace state."""
         if not self.trace_data:
             return
 
         self.current_step = int(step_idx)
         state = self.trace_data[self.current_step]
 
-        # Update Scrubber UI
         self.ids.step_label.text = f"{self.current_step} / {len(self.trace_data) - 1}"
         if int(self.ids.step_scrubber.value) != self.current_step:
             self.ids.step_scrubber.value = self.current_step
 
-        # Update Code & Tracing UI
         self._render_code_trace(state)
 
-        # Update Variables UI
         vars_text = self._format_variables(state.locals, "LOCALS")
         vars_text += self._format_variables(state.globals, "GLOBALS")
 
@@ -173,10 +162,8 @@ class RootLayout(MDBoxLayout):
             vars_text if vars_text else "[i][color=#555555]empty[/color][/i]"
         )
 
-        # Update Call Stack UI
         self._render_call_stack(state)
 
-        # Update Output & Error Display
         self.ids.output_display.markup = True
         self.ids.output_display.text = state.stdout
 
@@ -190,7 +177,6 @@ class RootLayout(MDBoxLayout):
             self.ids.error_banner.text = ""
 
     def _render_code_trace(self, state):
-        """Helper to render the code lines and active line highlight."""
         code_lines = self._original_code.split("\n")
         rendered_code = ""
         trace_nums = []
@@ -210,7 +196,6 @@ class RootLayout(MDBoxLayout):
         self.ids.code_display.text = rendered_code.rstrip("\n")
         self.ids.trace_line_numbers.text = "\n".join(trace_nums)
 
-        # Handle Scrolling
         label_height = max(
             self.ids.code_display.texture_size[1],
             self.ids.trace_line_numbers.texture_size[1],
@@ -223,7 +208,6 @@ class RootLayout(MDBoxLayout):
             self.ids.trace_wrapper.scroll_y = max(0.0, min(1.0, target_scroll))
 
     def _format_variables(self, var_dict, title):
-        """Helper to format dictionaries into UI markup."""
         if not var_dict:
             return ""
 
@@ -243,7 +227,6 @@ class RootLayout(MDBoxLayout):
         return text + "\n"
 
     def _render_call_stack(self, state):
-        """Helper to format the call stack trace."""
         stack_text = ""
         for i, func in enumerate(reversed(state.stack)):
             func_name = (
@@ -266,7 +249,6 @@ class RootLayout(MDBoxLayout):
             self.play_event = Clock.schedule_interval(self._play_tick, 0.5 / value)
 
     def toggle_play(self, instance):
-        # Reset if trying to play from the very end
         if not self.is_playing and self.current_step >= len(self.trace_data) - 1:
             self.render_step(0)
 

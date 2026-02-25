@@ -26,7 +26,7 @@ class Executor:
 
     def execute(self):
         CodeParser.parse(self.code)
-        
+
         stdout_capture = io.StringIO()
         self.tracer = Tracer(stdout_buffer=stdout_capture, max_steps=self.max_steps)
         exec_globals = {}
@@ -42,7 +42,7 @@ class Executor:
 
         exec_globals["input"] = mock_input
 
-        result = {'error': None}
+        result = {"error": None}
 
         def run_code():
             try:
@@ -55,7 +55,7 @@ class Executor:
             except ExecutionLimitReached:
                 pass
             except Exception as e:
-                result['error'] = f"{type(e).__name__}: {str(e)}"
+                result["error"] = f"{type(e).__name__}: {str(e)}"
 
         thread = threading.Thread(target=run_code)
         thread.start()
@@ -63,12 +63,11 @@ class Executor:
 
         if thread.is_alive():
             self.tracer.limit_reached = True
-            result['error'] = "ExecutionTimeout: Thread killed after timeout."
-            # Note: Python cannot force kill a thread easily, but we'll return what we have
+            result["error"] = "ExecutionTimeout: Thread killed after timeout."
 
         return {
             "steps": self.tracer.get_trace(),
             "counts": self.tracer.line_counts,
             "limit_reached": self.tracer.limit_reached,
-            "error": result['error'],
+            "error": result["error"],
         }

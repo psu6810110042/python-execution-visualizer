@@ -52,7 +52,6 @@
                 points: [self.x, self.y, self.right, self.y]
                 width: 1
 
-        # 1. ESSENTIAL: Run Button (Fixed width)
         MDBoxLayout:
             size_hint_x: None
             width: '140dp' 
@@ -82,10 +81,9 @@
                         theme_text_color: "Custom"
                         text_color: 1, 1, 1, 1
 
-        # 2. ESSENTIAL: Playback Controls (Fixed minimum width so they never squish)
         MDBoxLayout:
             size_hint_x: None
-            width: self.minimum_width  # Hugs the 3 buttons perfectly
+            width: self.minimum_width
             spacing: '10dp'
             
             DarkIconButton:
@@ -108,12 +106,10 @@
             bar_width: 0  
 
             MDBoxLayout:
-                # THE MAGIC TRICK: Expand to fill the screen, but never crush smaller than 450dp
                 size_hint_x: None
                 width: max(dp(450), self.parent.width if self.parent else 0)
                 spacing: '20dp'
 
-                # Step Scrubber (Flexible - Takes up all the extra space!)
                 MDBoxLayout:
                     size_hint_x: 1  
                     spacing: '10dp'
@@ -136,14 +132,13 @@
                         theme_text_color: "Custom"
                         text_color: utils.get_color_from_hex('#858585')
                         size_hint_x: None
-                        width: '100dp'  # Increased from 60dp to fit up to 9999 / 9999
+                        width: '100dp'
                         halign: 'right'
                         valign: 'center'
-                        text_size: self.size  # Locks the text boundary
-                        shorten: True         # Prevents it from EVER creating a new line
+                        text_size: self.size
+                        shorten: True 
                         shorten_from: 'right'
 
-                # Speed Slider (Fixed width so the text and slider stay predictable)
                 MDBoxLayout:
                     size_hint_x: None
                     width: '200dp'

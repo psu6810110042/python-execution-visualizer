@@ -1,180 +1,212 @@
 #:kivy 2.0.0
 #:import utils kivy.utils
 
-<DarkButton@Button>:
-    background_normal: ''
-    background_color: utils.get_color_from_hex('#383838')
-    color: utils.get_color_from_hex('#eeeeee')
-    font_size: '13sp'
-    size_hint_y: None
-    height: '30dp'
-    size_hint_x: None
-    width: '80dp'
+<DarkIconButton@MDIconButton>:
+    style: "filled"
+    theme_bg_color: "Custom"
+    md_bg_color: utils.get_color_from_hex('#383838')
+    theme_icon_color: "Custom"
+    icon_color: 1, 1, 1, 1
 
-<PrimaryButton@DarkButton>:
-    background_color: utils.get_color_from_hex('#0e639c')
+<PrimaryIconButton@MDIconButton>:
+    style: "filled"
+    theme_bg_color: "Custom"
+    md_bg_color: utils.get_color_from_hex('#0e639c')
+    theme_icon_color: "Custom"
+    icon_color: 1, 1, 1, 1
 
-<PanelTitle@Label>:
+<PanelTitle@MDLabel>:
     size_hint_y: None
     height: '25dp'
-    text_size: self.size
-    halign: 'left'
-    valign: 'middle'
-    font_size: '11sp'
-    bold: True
-    color: utils.get_color_from_hex('#858585')
+    font_style: "Label"
+    role: "small"
+    theme_text_color: "Custom"
+    text_color: utils.get_color_from_hex('#858585')
+    md_bg_color: utils.get_color_from_hex('#252526')
+    padding: "15dp", "0dp", "0dp", "0dp"
     canvas.before:
-        Color:
-            rgba: utils.get_color_from_hex('#252526')
-        Rectangle:
-            pos: self.pos
-            size: self.size
         Color:
             rgba: utils.get_color_from_hex('#2d2d2d')
         Line:
             points: [self.x, self.y, self.right, self.y]
             width: 1
 
-<DisplayPanel@BoxLayout>:
+<DisplayPanel@MDBoxLayout>:
     orientation: 'vertical'
-    canvas.before:
-        Color:
-            rgba: utils.get_color_from_hex('#252526')
-        Rectangle:
-            pos: self.pos
-            size: self.size
+    md_bg_color: utils.get_color_from_hex('#252526')
 
 <RootLayout>:
     orientation: 'vertical'
-    canvas.before:
-        Color:
-            rgba: utils.get_color_from_hex('#1e1e1e')  
-        Rectangle:
-            pos: self.pos
-            size: self.size
+    md_bg_color: utils.get_color_from_hex('#1e1e1e')  
 
-    BoxLayout:
+    MDBoxLayout:
         size_hint_y: None
-        height: '50dp'
-        padding: ['15dp', '10dp']
+        height: '55dp'
+        padding: '15dp', '10dp'
         spacing: '15dp'
+        md_bg_color: utils.get_color_from_hex('#333333')
         canvas.before:
-            Color:
-                rgba: utils.get_color_from_hex('#333333')
-            Rectangle:
-                pos: self.pos
-                size: self.size
             Color:
                 rgba: utils.get_color_from_hex('#3e3e42')
             Line:
                 points: [self.x, self.y, self.right, self.y]
                 width: 1
 
-        PrimaryButton:
-            text: 'Run ->'
+        # 1. ESSENTIAL: Run Button (Fixed width)
+        MDBoxLayout:
             size_hint_x: None
-            width: '80dp'
-            on_release: root.start_visualization(self)
+            width: '140dp' 
+            size_hint_y: None
+            height: '40dp'
 
-        BoxLayout:
-            orientation: 'vertical'
-            size_hint_x: 1
-            
-            BoxLayout:
-                orientation: 'horizontal'
-                spacing: '5dp'
-                
-                DarkButton:
-                    text: '<'
-                    width: '30dp'
-                    on_release: root.step_visualization(-1)
-                    
-                PrimaryButton:
-                    id: btn_play
-                    text: 'Play'
-                    on_release: root.toggle_play(self)
-                    
-                DarkButton:
-                    text: '>'
-                    width: '30dp'
-                    on_release: root.step_visualization(1)
-                    
-                Slider:
-                    id: step_scrubber
-                    min: 0
-                    max: 0
-                    value: 0
-                    step: 1
-                    cursor_size: ('15dp', '15dp')
-                    on_value: root.render_step(int(self.value))
-                    
-                Label:
-                    id: step_label
-                    text: '0 / 0'
-                    font_name: 'RobotoMono-Regular'
-                    font_size: '12sp'
-                    color: utils.get_color_from_hex('#858585')
-                    size_hint_x: None
-                    width: '60dp'
-                    text_size: self.size
-                    halign: 'right'
-                    valign: 'middle'
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
 
-        BoxLayout:
+                MDButton:
+                    id: btn_run
+                    style: "filled"
+                    theme_bg_color: "Custom"
+                    md_bg_color: utils.get_color_from_hex('#0e639c')
+                    on_release: root.start_visualization(self)
+                    
+                    MDButtonIcon:
+                        id: btn_run_icon
+                        icon: 'rocket-launch'
+                        theme_icon_color: "Custom"
+                        icon_color: 1, 1, 1, 1
+                        
+                    MDButtonText:
+                        id: btn_run_text
+                        text: 'Run'
+                        theme_text_color: "Custom"
+                        text_color: 1, 1, 1, 1
+
+        # 2. ESSENTIAL: Playback Controls (Fixed minimum width so they never squish)
+        MDBoxLayout:
             size_hint_x: None
-            width: '200dp'
+            width: self.minimum_width  # Hugs the 3 buttons perfectly
             spacing: '10dp'
-            Label:
-                text: 'Speed:'
-                font_size: '12sp'
-                color: utils.get_color_from_hex('#888888')
+            
+            DarkIconButton:
+                icon: 'step-backward'
+                on_release: root.step_visualization(-1)
+                
+            PrimaryIconButton:
+                id: btn_play
+                icon: 'play'
+                on_release: root.toggle_play(self)
+                
+            DarkIconButton:
+                icon: 'step-forward'
+                on_release: root.step_visualization(1)
+
+        ScrollView:
+            size_hint_x: 1
+            do_scroll_y: False
+            do_scroll_x: True  
+            bar_width: 0  
+
+            MDBoxLayout:
+                # THE MAGIC TRICK: Expand to fill the screen, but never crush smaller than 450dp
                 size_hint_x: None
-                width: '40dp'
-            Slider:
-                id: speed_slider
-                min: 0.1
-                max: 2.0
-                value: 1.0
+                width: max(dp(450), self.parent.width if self.parent else 0)
+                spacing: '20dp'
+
+                # Step Scrubber (Flexible - Takes up all the extra space!)
+                MDBoxLayout:
+                    size_hint_x: 1  
+                    spacing: '10dp'
+                    
+                    MDSlider:
+                        id: step_scrubber
+                        min: 0
+                        max: 1
+                        value: 0
+                        disabled: True
+                        step: 1
+                        size_hint_x: 1
+                        on_value: root.render_step(int(self.value))
+                        
+                    MDLabel:
+                        id: step_label
+                        text: '0 / 0'
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '12sp'
+                        theme_text_color: "Custom"
+                        text_color: utils.get_color_from_hex('#858585')
+                        size_hint_x: None
+                        width: '100dp'  # Increased from 60dp to fit up to 9999 / 9999
+                        halign: 'right'
+                        valign: 'center'
+                        text_size: self.size  # Locks the text boundary
+                        shorten: True         # Prevents it from EVER creating a new line
+                        shorten_from: 'right'
+
+                # Speed Slider (Fixed width so the text and slider stay predictable)
+                MDBoxLayout:
+                    size_hint_x: None
+                    width: '200dp'
+                    spacing: '10dp'
+                    padding: [0, 0, '15dp', 0]
+                    
+                    MDLabel:
+                        text: f'Speed: {speed_slider.value:.1f}x'
+                        font_name: 'RobotoMono-Regular'
+                        font_size: '12sp'
+                        theme_text_color: "Custom"
+                        text_color: utils.get_color_from_hex('#858585')
+                        size_hint_x: None
+                        width: '90dp'
+                        halign: 'right'
+                        valign: 'center'
+                        text_size: self.size
+                        shorten: True
+                        shorten_from: 'right'
+                        
+                    MDSlider:
+                        id: speed_slider
+                        min: 0.1
+                        max: 2.0
+                        value: 1.0
+                        size_hint_x: 1
+                        on_value: root.update_speed(self.value)
 
 
-    Label:
+    MDLabel:
         id: error_banner
         size_hint_y: None
         height: '0dp'
         text: ''
         markup: True
         halign: 'left'
-        valign: 'middle'
-        text_size: self.size
-        color: utils.get_color_from_hex('#ffdddd')
+        valign: 'center'
+        theme_text_color: "Custom"
+        text_color: utils.get_color_from_hex('#ffdddd')
+        md_bg_color: utils.get_color_from_hex('#5a1d1d')
+        padding: "10dp", "0dp", "0dp", "0dp"
         canvas.before:
-            Color:
-                rgba: utils.get_color_from_hex('#5a1d1d')
-            Rectangle:
-                pos: self.pos
-                size: self.size
             Color:
                 rgba: utils.get_color_from_hex('#ff0000')
             Line:
                 points: [self.x, self.y, self.right, self.y]
                 width: 1
 
-    BoxLayout:
+    MDBoxLayout:
         orientation: 'horizontal'
         
-        BoxLayout:
+        MDBoxLayout:
             orientation: 'vertical'
             size_hint_x: 0.6
             
-            BoxLayout:
+            MDBoxLayout:
                 orientation: 'vertical'
                 size_hint_y: 0.7
-                background_color: utils.get_color_from_hex('#1e1e1e')
+                md_bg_color: utils.get_color_from_hex('#1e1e1e')
                 
                 PanelTitle:
                     text: ' CODE EDITOR'
-                    padding_x: '15dp'
-                BoxLayout:
+                MDBoxLayout:
                     id: editor_wrapper
                     orientation: 'horizontal'
                     opacity: 1
@@ -216,11 +248,11 @@
                     size_hint_y: None
                     height: 0
                     
-                    BoxLayout:
+                    MDBoxLayout:
                         orientation: 'horizontal'
                         size_hint: None, None
-                        height: max(trace_line_numbers.texture_size[1], code_display.texture_size[1])
-                        width: max(trace_wrapper.width, trace_line_numbers.width + code_display.texture_size[0])
+                        height: max(trace_line_numbers.texture_size[1], code_display.texture_size[1]) if (trace_line_numbers.texture_size and code_display.texture_size) else 0
+                        width: max(trace_wrapper.width, trace_line_numbers.width + code_display.texture_size[0]) if code_display.texture_size else trace_wrapper.width
                         
                         Label:
                             id: trace_line_numbers
@@ -234,7 +266,7 @@
                             font_size: '14sp'
                             halign: 'right'
                             valign: 'top'
-                            padding: ['8dp', '8dp']
+                            padding: [0, '10dp', '8dp', '10dp']
                             markup: True
 
                         Label:
@@ -242,25 +274,21 @@
                             text: ''
                             markup: True
                             color: utils.get_color_from_hex('#d4d4d4')
-                            text_size: max(self.width, self.texture_size[0]), None
+                            text_size: max(self.width, self.texture_size[0] if self.texture_size else 0), None
                             size_hint: None, None
-                            size: max(self.parent.width - trace_line_numbers.width, self.texture_size[0]), self.texture_size[1]
+                            size: max(self.parent.width - trace_line_numbers.width if self.parent and trace_line_numbers else 0, self.texture_size[0] if self.texture_size else 0), self.texture_size[1] if self.texture_size else 0
                             pos_hint: {'top': 1}
                             halign: 'left'
                             valign: 'top'
                             font_name: 'RobotoMono-Regular'
                             font_size: '14sp'
-                            padding: ['15dp', '8dp']
+                            padding: ['15dp', '10dp']
 
-            BoxLayout:
+            MDBoxLayout:
                 orientation: 'vertical'
                 size_hint_y: 0.3
+                md_bg_color: utils.get_color_from_hex('#181818')
                 canvas.before:
-                    Color:
-                        rgba: utils.get_color_from_hex('#181818')
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
                     Color:
                         rgba: utils.get_color_from_hex('#3e3e42')
                     Line:
@@ -269,7 +297,6 @@
 
                 PanelTitle:
                     text: ' TERMINAL / OUTPUT'
-                    padding_x: '15dp'
                     
                 ScrollView:
                     do_scroll_x: True
@@ -278,7 +305,6 @@
                         id: output_display
                         text: ''
                         color: utils.get_color_from_hex('#dcdcdc')
-                        text_size: None, None
                         size_hint: None, None
                         size: self.texture_size
                         halign: 'left'
@@ -287,8 +313,7 @@
                         font_size: '13sp'
                         padding: ['10dp', '10dp']
 
-
-        BoxLayout:
+        MDBoxLayout:
             orientation: 'vertical'
             size_hint_x: 0.4
             canvas.before:
@@ -302,7 +327,6 @@
                 size_hint_y: 0.6
                 PanelTitle:
                     text: ' VARIABLES'
-                    padding_x: '15dp'
                 ScrollView:
                     do_scroll_x: True
                     do_scroll_y: True
@@ -310,7 +334,6 @@
                         id: variable_display
                         text: ''
                         color: utils.get_color_from_hex('#cccccc')
-                        text_size: None, None
                         size_hint: None, None
                         size: self.texture_size
                         halign: 'left'
@@ -330,7 +353,6 @@
                         width: 1
                 PanelTitle:
                     text: ' CALL STACK'
-                    padding_x: '15dp'
                 ScrollView:
                     do_scroll_x: True
                     do_scroll_y: True
@@ -338,7 +360,6 @@
                         id: memory_display
                         text: ''
                         color: utils.get_color_from_hex('#aaaaaa')
-                        text_size: None, None
                         size_hint: None, None
                         size: self.texture_size
                         halign: 'left'

@@ -11,6 +11,7 @@ dependencies = [
     "kivy-deps-glew>=0.3.1",
     "kivy-deps-gstreamer>=0.3.4",
     "kivy-deps-sdl2>=0.8.0",
+    "kivymd==1.1.1",
     "pygments>=2.19.2",
 ]
 
@@ -18,3 +19,6 @@ dependencies = [
 dev = [
     "pytest-cov>=7.0.0",
 ]
+
+[tool.uv.sources]
+kivymd = { url = "https://github.com/kivymd/KivyMD/archive/master.zip" }

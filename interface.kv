@@ -1,6 +1,24 @@
 #:kivy 2.0.0
 #:import utils kivy.utils
 
+# --- Custom Splitter for Resizing ---
+<LoadSplitter@Splitter>:
+    strip_size: '10dp'
+    min_size: '100dp'
+    # Visual style for the drag strip
+    canvas.after:
+        Color:
+            rgba: utils.get_color_from_hex('#444444')
+        Rectangle:
+            pos: self.pos if self.sizable_from == 'left' or self.sizable_from == 'bottom' else (self.right - self.strip_size, self.y) if self.sizable_from == 'right' else (self.x, self.top - self.strip_size)
+            size: (self.strip_size, self.height) if self.sizable_from in ['left', 'right'] else (self.width, self.strip_size)
+        # Add a little "grip" icon (dots) in the center of the strip
+        Color:
+            rgba: utils.get_color_from_hex('#666666')
+        Ellipse:
+            pos: (self.center_x - 2, self.y + self.height/2 - 2) if self.sizable_from in ['left', 'right'] else (self.x + self.width/2 - 2, self.center_y - 2)
+            size: 4, 4
+
 <DarkIconButton@MDIconButton>:
     style: "filled"
     theme_bg_color: "Custom"
@@ -39,6 +57,7 @@
     orientation: 'vertical'
     md_bg_color: utils.get_color_from_hex('#1e1e1e')  
 
+    # --- TOP TOOLBAR ---
     MDBoxLayout:
         size_hint_y: None
         height: '55dp'
@@ -68,7 +87,7 @@
                     theme_bg_color: "Custom"
                     md_bg_color: utils.get_color_from_hex('#0e639c')
                     on_release: root.start_visualization(self)
-                    
+                     
                     MDButtonIcon:
                         id: btn_run_icon
                         icon: 'rocket-launch'
@@ -167,7 +186,7 @@
                         size_hint_x: 1
                         on_value: root.update_speed(self.value)
 
-
+    # --- ERROR BANNER ---
     MDLabel:
         id: error_banner
         size_hint_y: None
@@ -187,130 +206,149 @@
                 points: [self.x, self.y, self.right, self.y]
                 width: 1
 
+    # --- MAIN CONTENT AREA ---
     MDBoxLayout:
         orientation: 'horizontal'
         
-        MDBoxLayout:
-            orientation: 'vertical'
+        # === 1. LEFT PANEL (Editor + Terminal) ===
+        # Wrapped in LoadSplitter to resize against the Right Panel
+        LoadSplitter:
+            sizable_from: 'right'
             size_hint_x: 0.6
-            
+            min_size: '300dp'
+            max_size: root.width - dp(200)
+
             MDBoxLayout:
                 orientation: 'vertical'
-                size_hint_y: 0.7
-                md_bg_color: utils.get_color_from_hex('#1e1e1e')
                 
-                PanelTitle:
-                    text: ' CODE EDITOR'
-                MDBoxLayout:
-                    id: editor_wrapper
-                    orientation: 'horizontal'
-                    opacity: 1
-                    
-                    TextInput:
-                        id: line_numbers
-                        size_hint_x: None
-                        width: '55dp'
-                        text: '  1'
-                        readonly: True
-                        background_color: utils.get_color_from_hex('#1e1e1e')
-                        foreground_color: utils.get_color_from_hex('#6e7681')
-                        font_name: 'RobotoMono-Regular'
-                        font_size: '14sp'
-                        halign: 'right'
-                        padding: [0, '10dp', '8dp', '10dp']
-                        cursor_color: (0, 0, 0, 0)
-                        scroll_y: code_input.scroll_y
+                # === 2. TOP LEFT (Code Editor) ===
+                # Wrapped in LoadSplitter to resize vertically against Terminal
+                LoadSplitter:
+                    sizable_from: 'bottom'
+                    size_hint_y: 0.7
+                    min_size: '150dp'
+                    max_size: self.parent.height - dp(100)
 
-                    CodeInput:
-                        id: code_input
-                        lexer: __import__('pygments.lexers.python').lexers.python.PythonLexer()
-                        style_name: 'monokai'
-                        text: ''
-                        background_color: utils.get_color_from_hex('#1e1e1e')
-                        foreground_color: utils.get_color_from_hex('#c9d1d9')
-                        cursor_color: utils.get_color_from_hex('#58a6ff')
-                        font_name: 'RobotoMono-Regular'
-                        font_size: '14sp'
-                        auto_indent: True
-                        readonly: False
-                        padding: ['15dp', '10dp']
-
-                ScrollView:
-                    id: trace_wrapper
-                    do_scroll_x: True
-                    do_scroll_y: True
-                    opacity: 0
-                    size_hint_y: None
-                    height: 0
-                    
                     MDBoxLayout:
-                        orientation: 'horizontal'
-                        size_hint: None, None
-                        height: max(trace_line_numbers.texture_size[1], code_display.texture_size[1]) if (trace_line_numbers.texture_size and code_display.texture_size) else 0
-                        width: max(trace_wrapper.width, trace_line_numbers.width + code_display.texture_size[0]) if code_display.texture_size else trace_wrapper.width
+                        orientation: 'vertical'
+                        md_bg_color: utils.get_color_from_hex('#1e1e1e')
                         
-                        Label:
-                            id: trace_line_numbers
-                            size_hint: None, None
-                            size: '55dp', self.texture_size[1]
-                            text_size: self.width, None
-                            pos_hint: {'top': 1}
-                            text: ''
-                            color: utils.get_color_from_hex('#6e7681')
-                            font_name: 'RobotoMono-Regular'
-                            font_size: '14sp'
-                            halign: 'right'
-                            valign: 'top'
-                            padding: [0, '10dp', '8dp', '10dp']
-                            markup: True
+                        PanelTitle:
+                            text: ' CODE EDITOR'
 
+                        MDBoxLayout:
+                            id: editor_wrapper
+                            orientation: 'horizontal'
+                            opacity: 1
+                            
+                            TextInput:
+                                id: line_numbers
+                                size_hint_x: None
+                                width: '55dp'
+                                text: '  1'
+                                readonly: True
+                                background_color: utils.get_color_from_hex('#1e1e1e')
+                                foreground_color: utils.get_color_from_hex('#6e7681')
+                                font_name: 'RobotoMono-Regular'
+                                font_size: '14sp'
+                                halign: 'right'
+                                padding: [0, '10dp', '8dp', '10dp']
+                                cursor_color: (0, 0, 0, 0)
+                                scroll_y: code_input.scroll_y
+
+                            CodeInput:
+                                id: code_input
+                                lexer: __import__('pygments.lexers.python').lexers.python.PythonLexer()
+                                style_name: 'monokai'
+                                text: ''
+                                background_color: utils.get_color_from_hex('#1e1e1e')
+                                foreground_color: utils.get_color_from_hex('#c9d1d9')
+                                cursor_color: utils.get_color_from_hex('#58a6ff')
+                                font_name: 'RobotoMono-Regular'
+                                font_size: '14sp'
+                                auto_indent: True
+                                readonly: False
+                                padding: ['15dp', '10dp']
+
+                        ScrollView:
+                            id: trace_wrapper
+                            do_scroll_x: True
+                            do_scroll_y: True
+                            opacity: 0
+                            size_hint_y: None
+                            height: 0
+                            
+                            MDBoxLayout:
+                                orientation: 'horizontal'
+                                size_hint: None, None
+                                height: max(trace_line_numbers.texture_size[1], code_display.texture_size[1]) if (trace_line_numbers.texture_size and code_display.texture_size) else 0
+                                width: max(trace_wrapper.width, trace_line_numbers.width + code_display.texture_size[0]) if code_display.texture_size else trace_wrapper.width
+                                
+                                Label:
+                                    id: trace_line_numbers
+                                    size_hint: None, None
+                                    size: '55dp', self.texture_size[1]
+                                    text_size: self.width, None
+                                    pos_hint: {'top': 1}
+                                    text: ''
+                                    color: utils.get_color_from_hex('#6e7681')
+                                    font_name: 'RobotoMono-Regular'
+                                    font_size: '14sp'
+                                    halign: 'right'
+                                    valign: 'top'
+                                    padding: [0, '10dp', '8dp', '10dp']
+                                    markup: True
+
+                                Label:
+                                    id: code_display
+                                    text: ''
+                                    markup: True
+                                    color: utils.get_color_from_hex('#d4d4d4')
+                                    text_size: max(self.width, self.texture_size[0] if self.texture_size else 0), None
+                                    size_hint: None, None
+                                    size: max(self.parent.width - trace_line_numbers.width if self.parent and trace_line_numbers else 0, self.texture_size[0] if self.texture_size else 0), self.texture_size[1] if self.texture_size else 0
+                                    pos_hint: {'top': 1}
+                                    halign: 'left'
+                                    valign: 'top'
+                                    font_name: 'RobotoMono-Regular'
+                                    font_size: '14sp'
+                                    padding: ['15dp', '10dp']
+
+                # === 3. BOTTOM LEFT (Terminal) ===
+                # This fills the remaining vertical space of the left panel
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    # size_hint_y is handled by the Splitter above (it takes the rest)
+                    md_bg_color: utils.get_color_from_hex('#181818')
+                    canvas.before:
+                        Color:
+                            rgba: utils.get_color_from_hex('#3e3e42')
+                        Line:
+                            points: [self.x, self.top, self.right, self.top]
+                            width: 1
+
+                    PanelTitle:
+                        text: ' TERMINAL / OUTPUT'
+                        
+                    ScrollView:
+                        do_scroll_x: True
+                        do_scroll_y: True
                         Label:
-                            id: code_display
+                            id: output_display
                             text: ''
-                            markup: True
-                            color: utils.get_color_from_hex('#d4d4d4')
-                            text_size: max(self.width, self.texture_size[0] if self.texture_size else 0), None
+                            color: utils.get_color_from_hex('#dcdcdc')
                             size_hint: None, None
-                            size: max(self.parent.width - trace_line_numbers.width if self.parent and trace_line_numbers else 0, self.texture_size[0] if self.texture_size else 0), self.texture_size[1] if self.texture_size else 0
-                            pos_hint: {'top': 1}
+                            size: self.texture_size
                             halign: 'left'
                             valign: 'top'
                             font_name: 'RobotoMono-Regular'
-                            font_size: '14sp'
-                            padding: ['15dp', '10dp']
+                            font_size: '13sp'
+                            padding: ['10dp', '10dp']
 
-            MDBoxLayout:
-                orientation: 'vertical'
-                size_hint_y: 0.3
-                md_bg_color: utils.get_color_from_hex('#181818')
-                canvas.before:
-                    Color:
-                        rgba: utils.get_color_from_hex('#3e3e42')
-                    Line:
-                        points: [self.x, self.top, self.right, self.top]
-                        width: 1
-
-                PanelTitle:
-                    text: ' TERMINAL / OUTPUT'
-                    
-                ScrollView:
-                    do_scroll_x: True
-                    do_scroll_y: True
-                    Label:
-                        id: output_display
-                        text: ''
-                        color: utils.get_color_from_hex('#dcdcdc')
-                        size_hint: None, None
-                        size: self.texture_size
-                        halign: 'left'
-                        valign: 'top'
-                        font_name: 'RobotoMono-Regular'
-                        font_size: '13sp'
-                        padding: ['10dp', '10dp']
-
+        # === 4. RIGHT PANEL (Variables + Stack) ===
         MDBoxLayout:
             orientation: 'vertical'
-            size_hint_x: 0.4
+            # size_hint_x is handled by the Left Splitter (this takes the rest)
             canvas.before:
                 Color:
                     rgba: utils.get_color_from_hex('#3e3e42')
@@ -318,28 +356,36 @@
                     points: [self.x, self.y, self.x, self.top]
                     width: 1
 
-            DisplayPanel:
+            # === 5. TOP RIGHT (Variables) ===
+            # Wrapped in LoadSplitter to resize vertically against Call Stack
+            LoadSplitter:
+                sizable_from: 'bottom'
                 size_hint_y: 0.6
-                PanelTitle:
-                    text: ' VARIABLES'
-                ScrollView:
-                    do_scroll_x: True
-                    do_scroll_y: True
-                    Label:
-                        id: variable_display
-                        text: ''
-                        color: utils.get_color_from_hex('#cccccc')
-                        size_hint: None, None
-                        size: self.texture_size
-                        halign: 'left'
-                        valign: 'top'
-                        font_name: 'RobotoMono-Regular'
-                        font_size: '13sp'
-                        padding: ['10dp', '10dp']
-                        markup: True
+                min_size: '100dp'
+                max_size: self.parent.height - dp(100)
 
+                DisplayPanel:
+                    PanelTitle:
+                        text: ' VARIABLES'
+                    ScrollView:
+                        do_scroll_x: True
+                        do_scroll_y: True
+                        Label:
+                            id: variable_display
+                            text: ''
+                            color: utils.get_color_from_hex('#cccccc')
+                            size_hint: None, None
+                            size: self.texture_size
+                            halign: 'left'
+                            valign: 'top'
+                            font_name: 'RobotoMono-Regular'
+                            font_size: '13sp'
+                            padding: ['10dp', '10dp']
+                            markup: True
+
+            # === 6. BOTTOM RIGHT (Call Stack) ===
             DisplayPanel:
-                size_hint_y: 0.4
+                # size_hint_y is handled by the Splitter above
                 canvas.before:
                     Color:
                         rgba: utils.get_color_from_hex('#3e3e42')

@@ -8,6 +8,7 @@ from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 
 from core.executor import Executor
+from core.terminal import InteractiveTerminal
 
 Builder.load_file("interface.kv")
 
@@ -65,8 +66,10 @@ class RootLayout(MDBoxLayout):
         self.ids.code_input.text = default_code
         self.ids.code_input.bind(text=self._update_line_numbers)
         self.ids.code_input.bind(scroll_y=self._sync_scroll)
-
         self._update_line_numbers(self.ids.code_input, self.ids.code_input.text)
+        
+        # Start the backend shell process
+        self.ids.terminal_display.start_shell()
 
     def _sync_scroll(self, instance, value):
         self.ids.line_numbers.scroll_y = value
@@ -99,7 +102,7 @@ class RootLayout(MDBoxLayout):
             self.ids.btn_run_icon.icon = "rocket-launch"
             instance.md_bg_color = get_color_from_hex("#0e639c")
 
-            self.ids.output_display.text = ""
+            self.ids.terminal_display.clear()
             self.ids.variable_display.text = ""
             self.ids.memory_display.text = ""
 
@@ -135,7 +138,8 @@ class RootLayout(MDBoxLayout):
 
         self._update_line_numbers(None, code, target=self.ids.trace_line_numbers)
 
-        self.ids.output_display.text = "Executing..."
+        self.ids.terminal_display.clear()
+        self.ids.terminal_display.output_text = "Executing...\n"
         self.ids.variable_display.text = ""
         self.ids.memory_display.text = ""
 
@@ -147,11 +151,15 @@ class RootLayout(MDBoxLayout):
 
     def _run_in_thread(self, code):
         try:
-            executor = Executor(code=code, timeout=5.0)
+            executor = Executor(code=code, timeout=60.0) # increased timeout for manual inputs
+            # Register executor with terminal so we can type stuff in matching input()
+            self.ids.terminal_display.register_executor(executor)
             result = executor.execute()
             self._on_execution_finished(result)
         except Exception as e:
             self._on_execution_error(str(e))
+        finally:
+            self.ids.terminal_display.unregister_executor()
 
     @mainthread
     def _on_execution_finished(self, result):
@@ -159,7 +167,7 @@ class RootLayout(MDBoxLayout):
 
         if not self.trace_data:
             err = result.get("error", "Trace failed or no steps captured.")
-            self.ids.output_display.text = err
+            self.ids.terminal_display.output_text += f"\n{err}"
             return
 
         max_step = max(1, len(self.trace_data) - 1)
@@ -175,7 +183,7 @@ class RootLayout(MDBoxLayout):
 
     @mainthread
     def _on_execution_error(self, err_msg):
-        self.ids.output_display.text = f"Execution Error: {err_msg}"
+        self.ids.terminal_display.output_text = f"Execution Error: {err_msg}"
 
     def render_step(self, step_idx):
         if not self.trace_data:
@@ -200,8 +208,7 @@ class RootLayout(MDBoxLayout):
 
         self._render_call_stack(state)
 
-        self.ids.output_display.markup = True
-        self.ids.output_display.text = state.stdout
+        self.ids.terminal_display.output_text = state.stdout
 
         if state.event == "exception" and state.exception:
             self.ids.error_banner.height = "40dp"

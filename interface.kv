@@ -330,20 +330,8 @@
                     PanelTitle:
                         text: ' TERMINAL / OUTPUT'
                         
-                    ScrollView:
-                        do_scroll_x: True
-                        do_scroll_y: True
-                        Label:
-                            id: output_display
-                            text: ''
-                            color: utils.get_color_from_hex('#dcdcdc')
-                            size_hint: None, None
-                            size: self.texture_size
-                            halign: 'left'
-                            valign: 'top'
-                            font_name: 'RobotoMono-Regular'
-                            font_size: '13sp'
-                            padding: ['10dp', '10dp']
+                    InteractiveTerminal:
+                        id: terminal_display
 
         # === 4. RIGHT PANEL (Variables + Stack) ===
         MDBoxLayout:

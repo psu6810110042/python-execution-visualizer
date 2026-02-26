@@ -32,7 +32,7 @@ class ExecutionState:
 
 
 class Tracer:
-    def __init__(self, stdout_buffer=None, max_steps=10000):
+    def __init__(self, stdout_buffer=None, max_steps=10000, stop_event=None):
         self.trace_data = []
         self.serializer = Serializer()
         self.stdout_buffer = stdout_buffer
@@ -40,10 +40,12 @@ class Tracer:
         self.max_steps = max_steps
         self.step_count = 0
         self.limit_reached = False
+        self.stop_event = stop_event
 
     def trace(self, frame, event, arg):
-        if self.limit_reached:
-            raise ExecutionLimitReached("Execution limit reached")
+        if self.limit_reached or (self.stop_event and self.stop_event.is_set()):
+            self.limit_reached = True
+            raise ExecutionLimitReached("Execution limit reached or stopped by user")
 
         co = frame.f_code
         filename = co.co_filename

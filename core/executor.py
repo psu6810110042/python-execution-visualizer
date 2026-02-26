@@ -2,6 +2,8 @@ import sys
 import io
 import contextlib
 import threading
+import time
+
 from core.parser import CodeParser
 from core.tracer import Tracer, ExecutionLimitReached
 
@@ -23,12 +25,33 @@ class Executor:
         self.timeout = timeout
         self.max_steps = max_steps
         self.tracer = None
+        
+        # dynamic input handling
+        self.waiting_for_input = False
+        self._input_event = threading.Event()
+        self._current_input_value = ""
+        self._run_thread = None
+
+    def provide_input(self, value: str):
+        """Called by the UI to supply the input value and unblock the executor."""
+        self._current_input_value = value
+        self._input_event.set()
+
+    def stop(self):
+        """Called by the UI (e.g., Ctrl+C) to terminate execution early."""
+        if hasattr(self, '_stop_event'):
+            self._stop_event.set()
+        if getattr(self, 'tracer', None):
+            self.tracer.limit_reached = True
+        if getattr(self, 'waiting_for_input', False):
+            self.provide_input("") # Unblock the wait to let it crash out
 
     def execute(self):
         CodeParser.parse(self.code)
 
         stdout_capture = io.StringIO()
-        self.tracer = Tracer(stdout_buffer=stdout_capture, max_steps=self.max_steps)
+        self._stop_event = threading.Event()
+        self.tracer = Tracer(stdout_buffer=stdout_capture, max_steps=self.max_steps, stop_event=self._stop_event)
         exec_globals = {}
 
         def mock_input(prompt=""):
@@ -36,7 +59,14 @@ class Executor:
             if self.inputs:
                 value = str(self.inputs.pop(0))
             else:
-                value = ""
+                # Block and wait for dynamic UI input
+                self.waiting_for_input = True
+                self._input_event.clear()
+                # Wait for up to timeout seconds minus some buffer for the input
+                self._input_event.wait(timeout=self.timeout)
+                value = self._current_input_value
+                self.waiting_for_input = False
+                
             stdout_capture.write(value + "\n")
             return value
 
@@ -57,11 +87,30 @@ class Executor:
             except Exception as e:
                 result["error"] = f"{type(e).__name__}: {str(e)}"
 
-        thread = threading.Thread(target=run_code)
-        thread.start()
-        thread.join(timeout=self.timeout)
-
-        if thread.is_alive():
+        self._run_thread = threading.Thread(target=run_code)
+        self._run_thread.start()
+        
+        # We cannot just join with a fixed timeout anymore if we are waiting for input.
+        # So we poll the thread to see if it's done or if we've exceeded the pure execution timeout (excluding input waiting time)
+        start_time = threading.Timer(0, lambda: None) # mock timer
+        
+        # A simple polling loop that doesn't count `waiting_for_input` time towards the timeout
+        exec_time = 0.0
+        while self._run_thread.is_alive():
+            time.sleep(0.1)
+            
+            if hasattr(self, '_stop_event') and self._stop_event.is_set():
+                break
+                
+            if not self.waiting_for_input:
+                exec_time += 0.1
+                if exec_time >= self.timeout:
+                    break
+        
+        # Give the thread a moment to gracefully exit after the loop breaks
+        self._run_thread.join(timeout=1.0)
+        
+        if self._run_thread.is_alive():
             self.tracer.limit_reached = True
             result["error"] = "ExecutionTimeout: Thread killed after timeout."
 

@@ -217,10 +217,10 @@ source = { virtual = "." }
 dependencies = [
     { name = "docutils" },
     { name = "kivy" },
-    { name = "kivy-deps-angle" },
-    { name = "kivy-deps-glew" },
-    { name = "kivy-deps-gstreamer" },
-    { name = "kivy-deps-sdl2" },
+    { name = "kivy-deps-angle", marker = "sys_platform == 'win32'" },
+    { name = "kivy-deps-glew", marker = "sys_platform == 'win32'" },
+    { name = "kivy-deps-gstreamer", marker = "sys_platform == 'win32'" },
+    { name = "kivy-deps-sdl2", marker = "sys_platform == 'win32'" },
     { name = "kivymd" },
     { name = "pygments" },
 ]
@@ -234,10 +234,10 @@ dev = [
 requires-dist = [
     { name = "docutils", specifier = ">=0.22.4" },
     { name = "kivy", specifier = ">=2.3.1" },
-    { name = "kivy-deps-angle", specifier = ">=0.4.0" },
-    { name = "kivy-deps-glew", specifier = ">=0.3.1" },
-    { name = "kivy-deps-gstreamer", specifier = ">=0.3.4" },
-    { name = "kivy-deps-sdl2", specifier = ">=0.8.0" },
+    { name = "kivy-deps-angle", marker = "sys_platform == 'win32'", specifier = ">=0.4.0" },
+    { name = "kivy-deps-glew", marker = "sys_platform == 'win32'", specifier = ">=0.3.1" },
+    { name = "kivy-deps-gstreamer", marker = "sys_platform == 'win32'", specifier = ">=0.3.4" },
+    { name = "kivy-deps-sdl2", marker = "sys_platform == 'win32'", specifier = ">=0.8.0" },
     { name = "kivymd", url = "https://github.com/kivymd/KivyMD/archive/master.zip" },
     { name = "pygments", specifier = ">=2.19.2" },
 ]

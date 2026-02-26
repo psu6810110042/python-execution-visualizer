@@ -24,6 +24,7 @@ class RootLayout(MDBoxLayout):
         self.is_playing = False
         self._original_code = ""
         self.play_event = None
+        self.watch_expressions = []
 
         Window.bind(on_keyboard=self._on_keyboard)
 
@@ -207,6 +208,7 @@ class RootLayout(MDBoxLayout):
         )
 
         self._render_call_stack(state)
+        self._render_watch_expressions(state)
 
         self.ids.terminal_display.output_text = state.stdout
 
@@ -285,6 +287,56 @@ class RootLayout(MDBoxLayout):
         self.ids.memory_display.text = (
             stack_text if stack_text else "[i][color=#555555]empty[/color][/i]"
         )
+
+    def add_watch_expression(self):
+        expr = self.ids.watch_input.text.strip()
+        if expr and expr not in self.watch_expressions:
+            self.watch_expressions.append(expr)
+            self.ids.watch_input.text = ""
+            if self.trace_data:
+                self.render_step(self.current_step)
+        else:
+            self.ids.watch_input.text = ""
+            
+    def clear_watch_expressions(self):
+        self.watch_expressions.clear()
+        self.ids.watch_display.text = ""
+        if self.trace_data:
+            self.render_step(self.current_step)
+
+    def _render_watch_expressions(self, state):
+        if not self.watch_expressions:
+            self.ids.watch_display.text = "[i][color=#555555]No expressions[/color][/i]"
+            return
+
+        watch_text = ""
+        eval_globals = state.globals.copy()
+        eval_locals = state.locals.copy()
+
+        for expr in self.watch_expressions:
+            try:
+                # Basic eval using serialized subset 
+                res = eval(expr, eval_globals, eval_locals)
+                
+                if isinstance(res, dict) and "__type" in res:
+                    val_str = escape_markup(str(res.get("repr", "<object>")))
+                    desc_type = res.get("__type")
+                else:
+                    val_str = escape_markup(str(res))
+                    desc_type = type(res).__name__
+                    
+                color = "#ce9178"
+                if isinstance(res, (int, float)):
+                    color = "#b5cea8"
+                elif isinstance(res, bool) or res is None:
+                    color = "#569cd6"
+                    
+                watch_text += f"[color=#9cdcfe]{escape_markup(expr)}[/color]  [color={color}]{val_str}[/color]  [color=#4ec9b0][size=11sp]{desc_type}[/size][/color]\n"
+            except Exception as e:
+                watch_text += f"[color=#9cdcfe]{escape_markup(expr)}[/color]  [color=#f44747]Error: {type(e).__name__}[/color]\n"
+                
+        self.ids.watch_display.markup = True
+        self.ids.watch_display.text = watch_text
 
     def update_speed(self, value):
         if self.is_playing and self.play_event:

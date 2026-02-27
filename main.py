@@ -7,7 +7,9 @@ from kivy.lang import Builder
 from kivy.utils import escape_markup, get_color_from_hex
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.menu import MDDropdownMenu
 
+from core.examples import EXAMPLES
 from core.executor import Executor
 from core.terminal import InteractiveTerminal
 
@@ -25,6 +27,7 @@ class RootLayout(MDBoxLayout):
         self.is_playing = False
         self._original_code = ""
         self.play_event = None
+        self._examples_menu = None
 
         Window.bind(on_keyboard=self._on_keyboard)
         # Track panel visible states
@@ -96,6 +99,33 @@ class RootLayout(MDBoxLayout):
         # Start the backend shell process
         self.ids.terminal_display.start_shell()
         self.ids.terminal_display.on_focus_changed = self.set_terminal_focus
+
+    def open_examples_menu(self, caller):
+        """Build (once) and open the built-in examples dropdown menu."""
+        if self._examples_menu is None:
+            items = [
+                {
+                    "text": ex["title"],
+                    "on_release": (lambda key=i: self.load_example(key)),
+                }
+                for i, ex in enumerate(EXAMPLES)
+            ]
+            self._examples_menu = MDDropdownMenu(
+                caller=caller,
+                items=items,
+                width_mult=4,
+            )
+        else:
+            self._examples_menu.caller = caller
+        self._examples_menu.open()
+
+    def load_example(self, index):
+        """Load the selected example into the code editor."""
+        self._examples_menu.dismiss()
+        code = EXAMPLES[index]["code"]
+        self.ids.code_input.readonly = False
+        self.ids.code_input.text = code
+        self.ids.code_input.focus = True
 
     def _setup_focus_borders(self):
         """Pre-create canvas border instructions for editor and terminal panels."""

@@ -99,6 +99,21 @@
 
         MDBoxLayout:
             size_hint_x: None
+            width: '36dp'
+            size_hint_y: None
+            height: '36dp'
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+
+                DarkIconButton:
+                    id: btn_examples
+                    icon: 'code-tags'
+                    on_release: root.open_examples_menu(self)
+
+        MDBoxLayout:
+            size_hint_x: None
             width: self.minimum_width
             spacing: '10dp'
             

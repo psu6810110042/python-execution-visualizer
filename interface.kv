@@ -228,6 +228,7 @@
                     max_size: self.parent.height - dp(100)
 
                     MDBoxLayout:
+                        id: editor_panel
                         orientation: 'vertical'
                         md_bg_color: utils.get_color_from_hex('#1e1e1e')
                         
@@ -281,6 +282,7 @@
                                 auto_indent: True
                                 readonly: False
                                 padding: ['15dp', '10dp']
+                                on_focus: root.set_editor_focus(self.focus)
 
                         ScrollView:
                             id: trace_wrapper

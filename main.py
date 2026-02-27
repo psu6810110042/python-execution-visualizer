@@ -2,6 +2,7 @@ import threading
 
 from kivy.clock import Clock, mainthread
 from kivy.core.window import Window
+from kivy.graphics import Color, Line
 from kivy.lang import Builder
 from kivy.utils import escape_markup, get_color_from_hex
 from kivymd.app import MDApp
@@ -85,8 +86,74 @@ class RootLayout(MDBoxLayout):
         self.ids.code_input.bind(scroll_y=self._sync_scroll)
         self._update_line_numbers(self.ids.code_input, self.ids.code_input.text)
 
+        # Prepare canvas border instructions for focus highlight
+        self._editor_focus_color = None
+        self._editor_focus_line = None
+        self._terminal_focus_color = None
+        self._terminal_focus_line = None
+        self._setup_focus_borders()
+
         # Start the backend shell process
         self.ids.terminal_display.start_shell()
+        self.ids.terminal_display.on_focus_changed = self.set_terminal_focus
+
+    def _setup_focus_borders(self):
+        """Pre-create canvas border instructions for editor and terminal panels."""
+        UNFOCUSED = (0, 0, 0, 0)
+        # Editor panel border
+        panel = self.ids.editor_panel
+        with panel.canvas.after:
+            self._editor_focus_color = Color(*UNFOCUSED)
+            self._editor_focus_line = Line(
+                rectangle=(panel.x, panel.y, panel.width, panel.height),
+                width=1.2,
+            )
+        panel.bind(
+            pos=self._update_editor_border,
+            size=self._update_editor_border,
+        )
+        # Terminal panel border
+        term = self.ids.terminal_panel
+        with term.canvas.after:
+            self._terminal_focus_color = Color(*UNFOCUSED)
+            self._terminal_focus_line = Line(
+                rectangle=(term.x, term.y, term.width, term.height),
+                width=1.2,
+            )
+        term.bind(
+            pos=self._update_terminal_border,
+            size=self._update_terminal_border,
+        )
+
+    def _update_editor_border(self, instance, _value):
+        if self._editor_focus_line:
+            self._editor_focus_line.rectangle = (
+                instance.x, instance.y, instance.width, instance.height
+            )
+
+    def _update_terminal_border(self, instance, _value):
+        if self._terminal_focus_line:
+            self._terminal_focus_line.rectangle = (
+                instance.x, instance.y, instance.width, instance.height
+            )
+
+    def set_editor_focus(self, focused):
+        """Toggle the focus border on the Code Editor panel."""
+        FOCUSED = (0.6, 0.6, 0.6, 0.4)
+        UNFOCUSED = (0, 0, 0, 0)
+        if self._editor_focus_color:
+            self._editor_focus_color.rgba = FOCUSED if focused else UNFOCUSED
+        if focused and self._terminal_focus_color:
+            self._terminal_focus_color.rgba = UNFOCUSED
+
+    def set_terminal_focus(self, focused):
+        """Toggle the focus border on the Terminal panel."""
+        FOCUSED = (0.6, 0.6, 0.6, 0.4)
+        UNFOCUSED = (0, 0, 0, 0)
+        if self._terminal_focus_color:
+            self._terminal_focus_color.rgba = FOCUSED if focused else UNFOCUSED
+        if focused and self._editor_focus_color:
+            self._editor_focus_color.rgba = UNFOCUSED
 
     def _sync_scroll(self, instance, value):
         self.ids.line_numbers.scroll_y = value

@@ -63,6 +63,7 @@ class InteractiveTerminal(MDBoxLayout):
         self._stop_event = threading.Event()
         self._executor = None
         self._keyboard = None
+        self.on_focus_changed = None  # Callback: fn(focused: bool)
         
         # Pyte Emulator State
         self._lines = 24
@@ -103,14 +104,22 @@ class InteractiveTerminal(MDBoxLayout):
         )
 
     def _request_keyboard(self):
-        if not self._keyboard:
-            self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-            self._keyboard.bind(on_key_down=self._on_key_down)
+        # Always release the old keyboard first (in case _keyboard_closed wasn't
+        # called, e.g. when code_input stole focus without going through our callback)
+        if self._keyboard:
+            self._keyboard.unbind(on_key_down=self._on_key_down)
+            self._keyboard = None
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_key_down)
+        if callable(self.on_focus_changed):
+            self.on_focus_changed(True)
 
     def _keyboard_closed(self):
         if self._keyboard:
             self._keyboard.unbind(on_key_down=self._on_key_down)
             self._keyboard = None
+            if callable(self.on_focus_changed):
+                self.on_focus_changed(False)
 
     def _on_key_down(self, keyboard, keycode, text, modifiers):
         if not self._executor and not self._win_pty and not self._process:

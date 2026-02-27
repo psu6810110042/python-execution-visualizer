@@ -122,11 +122,29 @@ class InteractiveTerminal(MDBoxLayout):
                 self.on_focus_changed(False)
 
     def _on_key_down(self, keyboard, keycode, text, modifiers):
-        if not self._executor and not self._win_pty and not self._process:
-            return True
-            
         key = keycode[0]
         key_str = keycode[1]
+
+        # When in visualization mode (code readonly), forward step-navigation keys to root
+        try:
+            from kivymd.app import MDApp
+            root = MDApp.get_running_app().root
+            if hasattr(root, 'ids') and root.ids.code_input.readonly:
+                if key == 275:  # RIGHT arrow -> next step
+                    root.step_visualization(1)
+                    return True
+                elif key == 276:  # LEFT arrow -> prev step
+                    root.step_visualization(-1)
+                    return True
+                elif key == 32:  # SPACE -> play/pause
+                    if root.trace_data:
+                        root.toggle_play(root.ids.btn_play)
+                    return True
+        except Exception:
+            pass
+
+        if not self._executor and not self._win_pty and not self._process:
+            return True
         
         # Ignore pure modifier keys
         if key_str in ['ctrl', 'lctrl', 'rctrl', 'alt', 'lalt', 'ralt', 'super', 'capslock', 'numlock', 'scrolllock']:

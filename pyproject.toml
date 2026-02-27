@@ -14,7 +14,7 @@ dependencies = [
     "kivymd==1.1.1",
     "pygments>=2.19.2",
     "pyte>=0.8.2",
-    "pywinpty>=3.0.3",
+    "pywinpty>=3.0.3; sys_platform == 'win32'",
 ]
 
 [dependency-groups]

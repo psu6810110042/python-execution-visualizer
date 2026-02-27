@@ -104,6 +104,8 @@ class RootLayout(MDBoxLayout):
             instance.md_bg_color = get_color_from_hex("#0e639c")
 
             self.ids.terminal_display.clear()
+            self.ids.terminal_display.start_shell()
+            
             self.ids.variable_display.text = ""
             self.ids.memory_display.text = ""
 
@@ -139,6 +141,7 @@ class RootLayout(MDBoxLayout):
 
         self._update_line_numbers(None, code, target=self.ids.trace_line_numbers)
 
+        self.ids.terminal_display.stop_shell()
         self.ids.terminal_display.clear()
         self.ids.terminal_display.output_text = "Executing...\n"
         self.ids.variable_display.text = ""

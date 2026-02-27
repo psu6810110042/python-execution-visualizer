@@ -383,7 +383,8 @@ class InteractiveTerminal(MDBoxLayout):
 
     def clear(self):
         self._screen.reset()
-        self._screen.history.clear()
+        self._screen.history.top.clear()
+        self._screen.history.bottom.clear()
         self._render_screen()
 
     def register_executor(self, executor_instance):

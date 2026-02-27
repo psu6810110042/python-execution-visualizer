@@ -13,6 +13,8 @@ dependencies = [
     "kivy-deps-sdl2>=0.8.0; sys_platform == 'win32'",
     "kivymd==1.1.1",
     "pygments>=2.19.2",
+    "pyte>=0.8.2",
+    "pywinpty>=3.0.3",
 ]
 
 [dependency-groups]

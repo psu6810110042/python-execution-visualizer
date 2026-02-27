@@ -34,15 +34,11 @@
     theme_icon_color: "Custom"
     icon_color: 1, 1, 1, 1
 
-<PanelTitle@MDLabel>:
+<PanelTitle@MDBoxLayout>:
     size_hint_y: None
     height: '25dp'
-    font_style: "Label"
-    role: "small"
-    theme_text_color: "Custom"
-    text_color: utils.get_color_from_hex('#858585')
     md_bg_color: utils.get_color_from_hex('#252526')
-    padding: "15dp", "0dp", "0dp", "0dp"
+    padding: "0dp", "0dp", "0dp", "0dp"
     canvas.before:
         Color:
             rgba: utils.get_color_from_hex('#2d2d2d')
@@ -182,7 +178,7 @@
                     MDSlider:
                         id: speed_slider
                         min: 0.1
-                        max: 2.0
+                        max: 5.0
                         value: 1.0
                         size_hint_x: 1
                         on_value: root.update_speed(self.value)
@@ -214,6 +210,7 @@
         # === 1. LEFT PANEL (Editor + Terminal) ===
         # Wrapped in LoadSplitter to resize against the Right Panel
         LoadSplitter:
+            id: left_splitter
             sizable_from: 'right'
             size_hint_x: 0.6
             min_size: '300dp'
@@ -223,8 +220,8 @@
                 orientation: 'vertical'
                 
                 # === 2. TOP LEFT (Code Editor) ===
-                # Wrapped in LoadSplitter to resize vertically against Terminal
                 LoadSplitter:
+                    id: editor_splitter
                     sizable_from: 'bottom'
                     size_hint_y: 0.7
                     min_size: '150dp'
@@ -235,7 +232,21 @@
                         md_bg_color: utils.get_color_from_hex('#1e1e1e')
                         
                         PanelTitle:
-                            text: ' CODE EDITOR'
+                            MDLabel:
+                                text: ' CODE EDITOR'
+                                font_style: "Label"
+                                role: "small"
+                                theme_text_color: "Custom"
+                                text_color: utils.get_color_from_hex('#858585')
+                                padding: "15dp", "0dp", "0dp", "0dp"
+                            MDIconButton:
+                                icon: 'chevron-down'
+                                icon_size: '14sp'
+                                size_hint: None, None
+                                size: '24dp', '24dp'
+                                theme_icon_color: "Custom"
+                                icon_color: utils.get_color_from_hex('#858585')
+                                on_release: root.toggle_panel('terminal')
 
                         MDBoxLayout:
                             id: editor_wrapper
@@ -316,10 +327,9 @@
                                     padding: ['15dp', '10dp']
 
                 # === 3. BOTTOM LEFT (Terminal) ===
-                # This fills the remaining vertical space of the left panel
                 MDBoxLayout:
+                    id: terminal_panel
                     orientation: 'vertical'
-                    # size_hint_y is handled by the Splitter above (it takes the rest)
                     md_bg_color: utils.get_color_from_hex('#181818')
                     canvas.before:
                         Color:
@@ -329,15 +339,30 @@
                             width: 1
 
                     PanelTitle:
-                        text: ' TERMINAL / OUTPUT'
+                        MDLabel:
+                            text: ' TERMINAL / OUTPUT'
+                            font_style: "Label"
+                            role: "small"
+                            theme_text_color: "Custom"
+                            text_color: utils.get_color_from_hex('#858585')
+                            padding: "15dp", "0dp", "0dp", "0dp"
+                        MDIconButton:
+                            id: terminal_toggle_btn
+                            icon: 'chevron-down'
+                            icon_size: '14sp'
+                            size_hint: None, None
+                            size: '24dp', '24dp'
+                            theme_icon_color: "Custom"
+                            icon_color: utils.get_color_from_hex('#858585')
+                            on_release: root.toggle_panel('terminal')
                         
                     InteractiveTerminal:
                         id: terminal_display
 
         # === 4. RIGHT PANEL (Variables + Stack) ===
         MDBoxLayout:
+            id: right_panel
             orientation: 'vertical'
-            # size_hint_x is handled by the Left Splitter (this takes the rest)
             canvas.before:
                 Color:
                     rgba: utils.get_color_from_hex('#3e3e42')
@@ -346,7 +371,6 @@
                     width: 1
 
             # === 5. TOP RIGHT (Variables) ===
-            # Wrapped in LoadSplitter to resize vertically
             LoadSplitter:
                 sizable_from: 'bottom'
                 size_hint_y: 0.45
@@ -355,7 +379,21 @@
 
                 DisplayPanel:
                     PanelTitle:
-                        text: ' VARIABLES'
+                        MDLabel:
+                            text: ' VARIABLES'
+                            font_style: "Label"
+                            role: "small"
+                            theme_text_color: "Custom"
+                            text_color: utils.get_color_from_hex('#858585')
+                            padding: "15dp", "0dp", "0dp", "0dp"
+                        MDIconButton:
+                            icon: 'chevron-right'
+                            icon_size: '14sp'
+                            size_hint: None, None
+                            size: '24dp', '24dp'
+                            theme_icon_color: "Custom"
+                            icon_color: utils.get_color_from_hex('#858585')
+                            on_release: root.toggle_panel('right')
                     ScrollView:
                         do_scroll_x: True
                         do_scroll_y: True
@@ -371,70 +409,6 @@
                             font_size: '13sp'
                             padding: ['10dp', '10dp']
                             markup: True
-
-            # === 5.5 MIDDLE RIGHT (Watch Expressions) ===
-            LoadSplitter:
-                sizable_from: 'bottom'
-                size_hint_y: 0.25
-                min_size: '100dp'
-                max_size: self.parent.height - dp(150)
-
-                DisplayPanel:
-                    PanelTitle:
-                        text: ' WATCH EXPRESSIONS'
-                    
-                    MDBoxLayout:
-                        orientation: 'vertical'
-                        
-                        MDBoxLayout:
-                            size_hint_y: None
-                            height: '40dp'
-                            padding: '10dp', '5dp'
-                            spacing: '5dp'
-                            
-                            TextInput:
-                                id: watch_input
-                                size_hint_x: 1
-                                multiline: False
-                                background_color: utils.get_color_from_hex('#1e1e1e')
-                                foreground_color: utils.get_color_from_hex('#d4d4d4')
-                                cursor_color: utils.get_color_from_hex('#58a6ff')
-                                font_name: 'RobotoMono-Regular'
-                                font_size: '13sp'
-                                hint_text: 'Expression...'
-                                hint_text_color: utils.get_color_from_hex('#6e7681')
-                                padding: ['5dp', '5dp']
-                                on_text_validate: root.add_watch_expression()
-
-                            DarkIconButton:
-                                icon: 'plus'
-                                icon_size: '16sp'
-                                size_hint: None, None
-                                size: '30dp', '30dp'
-                                on_release: root.add_watch_expression()
-                                
-                            DarkIconButton:
-                                icon: 'trash-can-outline'
-                                icon_size: '16sp'
-                                size_hint: None, None
-                                size: '30dp', '30dp'
-                                on_release: root.clear_watch_expressions()
-
-                        ScrollView:
-                            do_scroll_x: True
-                            do_scroll_y: True
-                            Label:
-                                id: watch_display
-                                text: ''
-                                color: utils.get_color_from_hex('#cccccc')
-                                size_hint: None, None
-                                size: self.texture_size
-                                halign: 'left'
-                                valign: 'top'
-                                font_name: 'RobotoMono-Regular'
-                                font_size: '13sp'
-                                padding: ['10dp', '10dp']
-                                markup: True
 
             # === 6. BOTTOM RIGHT (Call Stack) ===
             DisplayPanel:

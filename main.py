@@ -24,13 +24,29 @@ class RootLayout(MDBoxLayout):
         self.is_playing = False
         self._original_code = ""
         self.play_event = None
-        self.watch_expressions = []
 
         Window.bind(on_keyboard=self._on_keyboard)
+        # Track panel visible states
+        self._panel_visible = {"terminal": True, "right": True}
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
         if key == 13 and "ctrl" in modifiers:
             self.start_visualization(self.ids.btn_run)
+            return True
+
+        # Ctrl+1 → toggle terminal panel
+        if key == ord("1") and "ctrl" in modifiers:
+            self.toggle_panel("terminal")
+            return True
+
+        # Ctrl+` (backtick, key 96) → toggle right panel
+        if key == 96 and "ctrl" in modifiers:
+            self.toggle_panel("right")
+            return True
+
+        # Ctrl+2 → toggle code editor panel
+        if key == ord("2") and "ctrl" in modifiers:
+            self.toggle_panel("editor")
             return True
 
         if not self.ids.code_input.readonly:
@@ -68,7 +84,7 @@ class RootLayout(MDBoxLayout):
         self.ids.code_input.bind(text=self._update_line_numbers)
         self.ids.code_input.bind(scroll_y=self._sync_scroll)
         self._update_line_numbers(self.ids.code_input, self.ids.code_input.text)
-        
+
         # Start the backend shell process
         self.ids.terminal_display.start_shell()
 
@@ -103,10 +119,19 @@ class RootLayout(MDBoxLayout):
             self.ids.btn_run_icon.icon = "rocket-launch"
             instance.md_bg_color = get_color_from_hex("#0e639c")
 
+            # Reset panel proportions to defaults regardless of toggle state
+            self.ids.editor_splitter.size_hint_y = 0.7
+            self.ids.editor_splitter.opacity = 1
+            self.ids.terminal_panel.size_hint_y = 1
+            self.ids.terminal_panel.opacity = 1
+            self._panel_visible["terminal"] = True
+            self._panel_visible["editor"] = True
+
             self.ids.terminal_display.clear()
             self.ids.terminal_display.start_shell()
-            
+
             self.ids.variable_display.text = ""
+
             self.ids.memory_display.text = ""
 
             if self.is_playing:
@@ -155,7 +180,9 @@ class RootLayout(MDBoxLayout):
 
     def _run_in_thread(self, code):
         try:
-            executor = Executor(code=code, timeout=60.0) # increased timeout for manual inputs
+            executor = Executor(
+                code=code, timeout=60.0
+            )  # increased timeout for manual inputs
             # Register executor with terminal so we can type stuff in matching input()
             self.ids.terminal_display.register_executor(executor)
             result = executor.execute()
@@ -211,7 +238,6 @@ class RootLayout(MDBoxLayout):
         )
 
         self._render_call_stack(state)
-        self._render_watch_expressions(state)
 
         self.ids.terminal_display.output_text = state.stdout
 
@@ -291,56 +317,6 @@ class RootLayout(MDBoxLayout):
             stack_text if stack_text else "[i][color=#555555]empty[/color][/i]"
         )
 
-    def add_watch_expression(self):
-        expr = self.ids.watch_input.text.strip()
-        if expr and expr not in self.watch_expressions:
-            self.watch_expressions.append(expr)
-            self.ids.watch_input.text = ""
-            if self.trace_data:
-                self.render_step(self.current_step)
-        else:
-            self.ids.watch_input.text = ""
-            
-    def clear_watch_expressions(self):
-        self.watch_expressions.clear()
-        self.ids.watch_display.text = ""
-        if self.trace_data:
-            self.render_step(self.current_step)
-
-    def _render_watch_expressions(self, state):
-        if not self.watch_expressions:
-            self.ids.watch_display.text = "[i][color=#555555]No expressions[/color][/i]"
-            return
-
-        watch_text = ""
-        eval_globals = state.globals.copy()
-        eval_locals = state.locals.copy()
-
-        for expr in self.watch_expressions:
-            try:
-                # Basic eval using serialized subset 
-                res = eval(expr, eval_globals, eval_locals)
-                
-                if isinstance(res, dict) and "__type" in res:
-                    val_str = escape_markup(str(res.get("repr", "<object>")))
-                    desc_type = res.get("__type")
-                else:
-                    val_str = escape_markup(str(res))
-                    desc_type = type(res).__name__
-                    
-                color = "#ce9178"
-                if isinstance(res, (int, float)):
-                    color = "#b5cea8"
-                elif isinstance(res, bool) or res is None:
-                    color = "#569cd6"
-                    
-                watch_text += f"[color=#9cdcfe]{escape_markup(expr)}[/color]  [color={color}]{val_str}[/color]  [color=#4ec9b0][size=11sp]{desc_type}[/size][/color]\n"
-            except Exception as e:
-                watch_text += f"[color=#9cdcfe]{escape_markup(expr)}[/color]  [color=#f44747]Error: {type(e).__name__}[/color]\n"
-                
-        self.ids.watch_display.markup = True
-        self.ids.watch_display.text = watch_text
-
     def update_speed(self, value):
         if self.is_playing and self.play_event:
             self.play_event.cancel()
@@ -372,6 +348,61 @@ class RootLayout(MDBoxLayout):
             self.render_step(self.current_step + 1)
         else:
             self.toggle_play(None)  # Auto pause at end
+
+    def toggle_panel(self, panel_name):
+        """Show or hide a named panel by toggling size_hint and opacity."""
+        visible = self._panel_visible.get(panel_name, True)
+        new_visible = not visible
+        self._panel_visible[panel_name] = new_visible
+
+        if panel_name == "terminal":
+            panel = self.ids.terminal_panel
+            btn = self.ids.terminal_toggle_btn
+            editor = self.ids.editor_splitter
+            if new_visible:
+                # Restore both: terminal fills remaining space, editor goes back to 70%
+                panel.size_hint_y = 1
+                panel.opacity = 1
+                editor.size_hint_y = 0.7
+                btn.icon = "chevron-down"
+            else:
+                # Hide terminal and let editor expand to full height
+                panel.size_hint_y = None
+                panel.height = 0
+                panel.opacity = 0
+                editor.size_hint_y = 1
+                btn.icon = "chevron-up"
+
+        elif panel_name == "right":
+            panel = self.ids.right_panel
+            splitter = self.ids.left_splitter
+            if new_visible:
+                panel.size_hint_x = 0.4  # restore right panel to 40% width
+                panel.opacity = 1
+                splitter.size_hint_x = 0.6
+            else:
+                panel.size_hint_x = None
+                panel.width = 0
+                panel.opacity = 0
+                splitter.size_hint_x = 1
+
+        elif panel_name == "editor":
+            # The editor_splitter is a LoadSplitter — hiding it by collapsing size_hint_y
+            editor = self.ids.editor_splitter
+            terminal = self.ids.terminal_panel
+            # new_visible was already computed at top of this method
+            if new_visible:
+                editor.size_hint_y = 0.7
+                editor.opacity = 1
+                # Restore terminal to share space if it's visible
+                if self._panel_visible.get("terminal", True):
+                    terminal.size_hint_y = 1
+            else:
+                editor.size_hint_y = None
+                editor.height = 0
+                editor.opacity = 0
+                # Terminal now fills the whole left column
+                terminal.size_hint_y = 1
 
     def step_visualization(self, delta):
         if self.is_playing:

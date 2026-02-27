@@ -119,9 +119,23 @@ class InteractiveTerminal(MDBoxLayout):
         key = keycode[0]
         key_str = keycode[1]
         
-        # Ignore modifier keys completely
+        # Ignore pure modifier keys
         if key_str in ['ctrl', 'lctrl', 'rctrl', 'alt', 'lalt', 'ralt', 'super', 'capslock', 'numlock', 'scrolllock']:
             return True
+
+        # Forward panel-toggle shortcuts to root even when terminal is focused
+        if 'ctrl' in modifiers:
+            from kivymd.app import MDApp
+            root = MDApp.get_running_app().root
+            if key == ord('1'):
+                root.toggle_panel('terminal')
+                return True
+            if key == 96:  # backtick
+                root.toggle_panel('right')
+                return True
+            if key == ord('2'):
+                root.toggle_panel('editor')
+                return True
 
         # Determine VT sequence or character to send
         vt_seq = None

@@ -98,10 +98,13 @@ class InteractiveTerminal(MDBoxLayout):
                 size_hint: None, None
                 size: self.texture_size
                 color: utils.get_color_from_hex('#d4d4d4')
-                on_touch_down:
-                    if self.collide_point(*args[1].pos): root._request_keyboard()
 """
         )
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            self._request_keyboard()
+        return super().on_touch_down(touch)
 
     def _request_keyboard(self):
         # Always release the old keyboard first (in case _keyboard_closed wasn't

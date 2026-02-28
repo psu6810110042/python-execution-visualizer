@@ -58,10 +58,56 @@ class DataGraph(StencilView):
                             if k != "__truncated__":
                                 self._traverse_for_heap(v)
 
+    def on_parent(self, widget, parent):
+        if parent:
+            parent.bind(size=self._on_parent_size)
+            
+    def _on_parent_size(self, instance, size):
+        self.update_canvas()
+
     def update_canvas(self, *args):
+        # Prevent recursive size updates
+        if getattr(self, '_updating_canvas', False):
+            return
+            
+        self._updating_canvas = True
         self.canvas.clear()
         
         if not self.frame_data and not self.heap_data:
+            self._updating_canvas = False
+            return
+
+        # 1. Calculate required dimensions with a dummy base_y
+        metrics = self._calculate_layout(base_y=0)
+        
+        max_w = 0
+        min_y = 0
+        
+        for f in metrics["frames"].values():
+            if f["x"] + f["w"] + 50 > max_w: max_w = f["x"] + f["w"] + 50
+            if f["y"] < min_y: min_y = f["y"]
+            
+        for h in metrics["heap"].values():
+            if h["x"] + h["w"] + 50 > max_w: max_w = h["x"] + h["w"] + 50
+            if h["y"] < min_y: min_y = h["y"]
+            
+        required_h = -min_y + 100
+        
+        parent_w = self.parent.width if self.parent else 600
+        parent_h = self.parent.height if self.parent else 600
+        
+        target_w = max(parent_w, max_w)
+        target_h = max(parent_h, required_h)
+        
+        size_changed = False
+        if abs(self.width - target_w) > 1 or abs(self.height - target_h) > 1:
+            self.size = (target_w, target_h)
+            size_changed = True
+
+        if size_changed and args:
+            # If we were called by a pos/size binding and just changed size again,
+            # we should return and let Kivy trigger the next update_canvas
+            self._updating_canvas = False
             return
 
         with self.canvas:
@@ -69,10 +115,12 @@ class DataGraph(StencilView):
             Color(*self.c_bg)
             Rectangle(pos=self.pos, size=self.size)
 
-        metrics = self._calculate_layout()
+        # 2. Recalculate with actual bounds
+        metrics = self._calculate_layout(base_y=self.top)
         self._draw_graph(metrics)
+        self._updating_canvas = False
 
-    def _calculate_layout(self):
+    def _calculate_layout(self, base_y):
         # A very basic layout algorithm
         metrics = {
             "frames": {},
@@ -81,30 +129,42 @@ class DataGraph(StencilView):
         }
         
         # Constants
-        PADDING = 40
+        PADDING = 80
         FRAME_W = 260
         ROW_H = 45
         
         # 1. Layout Frames (Left side)
-        cur_y = self.top - PADDING
+        cur_y = base_y - PADDING
         for frame_name, frame_vars in self.frame_data.items():
             if not frame_vars:
                 continue
                 
             frame_h = ROW_H + (len(frame_vars) * ROW_H) + 10
+            
+            # Dynamic width calculation
+            max_k_len = max([len(str(k)) for k in frame_vars.keys()] + [0])
+            max_v_len = max([5 if (isinstance(v, dict) and "__ref__" in v) else len(str(v)) for v in frame_vars.values()] + [0])
+            
+            # Title width check
+            title_w = len(frame_name) * 11 + 30
+            
+            req_w = 20 + max_k_len * 11 + 40 + max_v_len * 11 + 20
+            max_w = max(FRAME_W, req_w, title_w)
+            
             metrics["frames"][frame_name] = {
                 "x": self.x + PADDING,
                 "y": cur_y - frame_h,
-                "w": FRAME_W,
+                "w": max_w,
                 "h": frame_h,
-                "vars": frame_vars
+                "vars": frame_vars,
+                "val_x_offset": 20 + max_k_len * 11 + 40
             }
             cur_y -= frame_h + PADDING
 
         # 2. Layout Heap Objects (Right side)
-        HEAP_START_X = self.x + PADDING + FRAME_W + 80
-        HEAP_MIN_W = 150
-        cur_y = self.top - PADDING
+        HEAP_START_X = self.x + PADDING + FRAME_W + 200
+        HEAP_MIN_W = 240
+        cur_y = base_y - PADDING
         
         for ref_id, obj in self.heap_data.items():
             obj_type = obj.get("__type__", "object")
@@ -114,23 +174,41 @@ class DataGraph(StencilView):
             h = ROW_H + 20 # Header
             w = HEAP_MIN_W
             
+            val_x_offset = 0
+            k_box_w = 0
+            
+            title_w = len(obj_type) * 11 + 100
+            
             if obj_type in ("list", "tuple", "set"):
                 if isinstance(val, list):
-                    w = max(HEAP_MIN_W, len(val) * 75)
+                    max_item_len = max([5 if (isinstance(x, dict) and "__ref__" in x) else (3 if x == "<truncated>" else len(str(x))) for x in val] + [0])
+                    slot_w = max_item_len * 11 + 40
+                    w = max(HEAP_MIN_W, title_w, len(val) * slot_w)
                     h += ROW_H
             elif obj_type == "dict":
                 if isinstance(val, dict):
                     keys = [k for k in val.keys() if k != "__truncated__"]
                     h += max(1, len(keys)) * ROW_H
+                    
+                    max_k_len = max([len(str(k)) for k in keys] + [0])
+                    max_v_len = max([5 if (isinstance(v, dict) and "__ref__" in v) else len(str(v)) for k, v in val.items() if k != "__truncated__"] + [0])
+                    
+                    k_box_w = max_k_len * 11 + 20
+                    req_w = k_box_w + 30 + max_v_len * 11 + 20
+                    w = max(HEAP_MIN_W, title_w, req_w)
+                    val_x_offset = k_box_w + 30
             else:
                  h += ROW_H
+                 w = max(HEAP_MIN_W, title_w, 20 + len(str(val)) * 11 + 20)
             
             metrics["heap"][ref_id] = {
                 "x": HEAP_START_X,
                 "y": cur_y - h,
                 "w": w,
                 "h": h,
-                "obj": obj
+                "obj": obj,
+                "val_x_offset": val_x_offset,
+                "k_box_w": k_box_w
             }
             cur_y -= h + PADDING
             
@@ -170,7 +248,7 @@ class DataGraph(StencilView):
             self._draw_text(var_name, m["x"] + 20, var_y, self.c_text, size=18)
             
             # Pointer Connection Point calculation
-            val_x = m["x"] + m["w"] - 90
+            val_x = m["x"] + m.get("val_x_offset", m["w"] / 2)
             
             if isinstance(var_val, dict) and "__ref__" in var_val:
                 ref_id = var_val["__ref__"]
@@ -178,14 +256,14 @@ class DataGraph(StencilView):
                 
                 if ref_id in all_metrics["heap"]:
                     all_metrics["pointers"].append({
-                        "start": (m["x"] + m["w"] - 20, var_y + 15),
+                        "start": (val_x + 50, var_y + 15),
                         "end_ref": ref_id
                     })
             else:
                 val_str = str(var_val)
                 c = self.c_string if isinstance(var_val, str) else self.c_number
                 if val_str == "None": c = self.c_null
-                self._draw_text(val_str[:15], val_x, var_y, c, size=18)
+                self._draw_text(val_str, val_x, var_y, c, size=18)
                 
             var_y -= 45
 
@@ -248,32 +326,35 @@ class DataGraph(StencilView):
                     v_str = str(item)
                     c = self.c_string if isinstance(item, str) else self.c_number
                     if v_str == "None": c = self.c_null
-                    self._draw_text(v_str[:8], slot_x + 10, content_y, c, size=18)
+                    self._draw_text(v_str, slot_x + 15, content_y, c, size=18)
                 
         elif obj_type == "dict" and isinstance(val, dict):
             # Key Value rows
+            val_x = m["val_x_offset"]
+            k_box_w = m["k_box_w"]
+            
             for k, v in val.items():
                 if k == "__truncated__":
                     continue
                     
                 # Dict key box
                 Color(0.15, 0.15, 0.15, 1)
-                Rectangle(pos=(m["x"], content_y - 5), size=(75, ROW_H))
-                self._draw_text(str(k)[:7], m["x"] + 12, content_y + 2, self.c_string, size=18)
+                Rectangle(pos=(m["x"], content_y - 5), size=(k_box_w, ROW_H))
+                self._draw_text(str(k), m["x"] + 12, content_y + 2, self.c_string, size=18)
                 
                 # Dict value
                 if isinstance(v, dict) and "__ref__" in v:
-                    self._draw_text("\u25CF", m["x"] + 100, content_y, self.c_pointer, size=24)
+                    self._draw_text("\u25CF", m["x"] + val_x + 10, content_y, self.c_pointer, size=24)
                     if v["__ref__"] in all_metrics["heap"]:
                         all_metrics["pointers"].append({
-                            "start": (m["x"] + 110, content_y + 15),
+                            "start": (m["x"] + val_x + 20, content_y + 15),
                             "end_ref": v["__ref__"]
                         })
                 else:
                     v_str = str(v)
                     c = self.c_string if isinstance(v, str) else self.c_number
                     if v_str == "None": c = self.c_null
-                    self._draw_text(v_str[:12], m["x"] + 90, content_y + 2, c, size=18)
+                    self._draw_text(v_str, m["x"] + val_x, content_y + 2, c, size=18)
                 
                 # Row separator
                 Color(*self.c_frame_border)
@@ -282,7 +363,7 @@ class DataGraph(StencilView):
                 content_y -= ROW_H
         else:
             # Render simple value representation
-            self._draw_text(str(val)[:20], m["x"] + 20, content_y, self.c_number, size=18)
+            self._draw_text(str(val), m["x"] + 20, content_y, self.c_number, size=18)
 
     def _draw_pointers(self, metrics):
         for p in metrics["pointers"]:
@@ -294,9 +375,9 @@ class DataGraph(StencilView):
                 # Point to middle left edge of the target bounding box
                 end_y = target["y"] + (target["h"] / 2)
                 
-                cp1_x = start_x + 60
+                cp1_x = start_x + 120
                 cp1_y = start_y
-                cp2_x = end_x - 60
+                cp2_x = end_x - 120
                 cp2_y = end_y
                 
                 Color(*self.c_pointer)

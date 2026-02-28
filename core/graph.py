@@ -302,13 +302,10 @@ class DataGraph(StencilView):
                 Color(*self.c_pointer)
                 # Ensure the line pops more by drawing a dark background line slightly thicker first
                 Color(0.1, 0.1, 0.1, 0.8)
-                Line(bezier=(start_x, start_y, cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y), width=4.0)
-                
-                Color(*self.c_pointer)
                 Line(bezier=(start_x, start_y, cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y), width=2.5)
                 
-                # Draw Arrowhead
-                Line(points=[end_x - 12, end_y - 8, end_x, end_y, end_x - 12, end_y + 8], width=2.5)
+                Color(*self.c_pointer)
+                Line(bezier=(start_x, start_y, cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y), width=1.5)
 
     def _draw_text(self, text, x, y, color, bold=False, size=12):
         label = CoreLabel(text=str(text), font_name="RobotoMono-Regular", font_size=size, bold=bold)

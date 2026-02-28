@@ -139,7 +139,7 @@ class RootLayout(MDBoxLayout):
 
     def set_editor_focus(self, focused):
         """Toggle the focus border on the Code Editor panel."""
-        FOCUSED = (0.6, 0.6, 0.6, 0.4)
+        FOCUSED = get_color_from_hex("#007fd4")
         UNFOCUSED = (0, 0, 0, 0)
         if self._editor_focus_color:
             self._editor_focus_color.rgba = FOCUSED if focused else UNFOCUSED
@@ -148,7 +148,7 @@ class RootLayout(MDBoxLayout):
 
     def set_terminal_focus(self, focused):
         """Toggle the focus border on the Terminal panel."""
-        FOCUSED = (0.6, 0.6, 0.6, 0.4)
+        FOCUSED = get_color_from_hex("#007fd4")
         UNFOCUSED = (0, 0, 0, 0)
         if self._terminal_focus_color:
             self._terminal_focus_color.rgba = FOCUSED if focused else UNFOCUSED

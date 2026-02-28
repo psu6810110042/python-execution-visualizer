@@ -1,5 +1,6 @@
 #:kivy 2.0.0
 #:import utils kivy.utils
+#:import DataGraph core.graph.DataGraph
 
 # --- Custom Splitter for Resizing ---
 <LoadSplitter@Splitter>:
@@ -433,18 +434,10 @@
                     ScrollView:
                         do_scroll_x: True
                         do_scroll_y: True
-                        Label:
-                            id: variable_display
-                            text: ''
-                            color: utils.get_color_from_hex('#cccccc')
+                        DataGraph:
+                            id: data_graph_display
                             size_hint: None, None
-                            size: self.texture_size
-                            halign: 'left'
-                            valign: 'top'
-                            font_name: 'RobotoMono-Regular'
-                            font_size: '13sp'
-                            padding: ['10dp', '10dp']
-                            markup: True
+                            size: max(self.parent.width, dp(600)), max(self.parent.height, dp(600))
 
             # === 6. BOTTOM RIGHT (Call Stack) ===
             DisplayPanel:

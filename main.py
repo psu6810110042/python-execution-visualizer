@@ -273,7 +273,9 @@ class RootLayout(MDBoxLayout):
             self.ids.terminal_display.clear()
             self.ids.terminal_display.start_shell()
 
-            self.ids.variable_display.text = ""
+            self.ids.data_graph_display.frame_data = {}
+            self.ids.data_graph_display.heap_data = {}
+            self.ids.data_graph_display.update_canvas()
 
             self.ids.memory_display.text = ""
 
@@ -312,7 +314,9 @@ class RootLayout(MDBoxLayout):
         self.ids.terminal_display.stop_shell()
         self.ids.terminal_display.clear()
         self.ids.terminal_display.output_text = "Executing...\n"
-        self.ids.variable_display.text = ""
+        self.ids.data_graph_display.frame_data = {}
+        self.ids.data_graph_display.heap_data = {}
+        self.ids.data_graph_display.update_canvas()
         self.ids.memory_display.text = ""
 
         self.ids.btn_run_text.text = "Stop Edit"
@@ -372,13 +376,8 @@ class RootLayout(MDBoxLayout):
 
         self._render_code_trace(state)
 
-        vars_text = self._format_variables(state.locals, "LOCALS")
-        vars_text += self._format_variables(state.globals, "GLOBALS")
-
-        self.ids.variable_display.markup = True
-        self.ids.variable_display.text = (
-            vars_text if vars_text else "[i][color=#555555]empty[/color][/i]"
-        )
+        # Trigger graph draw instead of text
+        self.ids.data_graph_display.build_graph(state.locals, state.globals)
 
         self._render_call_stack(state)
 
@@ -424,24 +423,7 @@ class RootLayout(MDBoxLayout):
             target_scroll = 1.0 - (state.line_number / total_lines)
             self.ids.trace_wrapper.scroll_y = max(0.0, min(1.0, target_scroll))
 
-    def _format_variables(self, var_dict, title):
-        if not var_dict:
-            return ""
 
-        text = f"[b][color=#858585]--- {title} ---[/color][/b]\n"
-        for k, v in var_dict.items():
-            if k == "input" or "mock_input" in str(v):
-                continue
-
-            if isinstance(v, dict) and "__type" in v:
-                val_str = escape_markup(str(v.get("repr", "<object>")))
-                type_str = v.get("__type")
-            else:
-                val_str = escape_markup(str(v))
-                type_str = type(v).__name__
-
-            text += f"[color=#9cdcfe]{k}[/color]  [color=#ce9178]{val_str}[/color]  [color=#4ec9b0][size=11sp]{type_str}[/size][/color]\n"
-        return text + "\n"
 
     def _render_call_stack(self, state):
         stack_text = ""

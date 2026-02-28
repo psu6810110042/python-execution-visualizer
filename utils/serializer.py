@@ -38,30 +38,33 @@ class Serializer:
 
             # Lists / Tuples
             if isinstance(obj, (list, tuple)):
+                items = []
                 if len(obj) > self.max_length:
-                    return [
-                        self._serialize_recursive(x, depth + 1, seen)
-                        for x in obj[: self.max_length]
-                    ] + [f"<truncated, total {len(obj)}>"]
-                return [self._serialize_recursive(x, depth + 1, seen) for x in obj]
+                    items = [self._serialize_recursive(x, depth + 1, seen) for x in obj[: self.max_length]]
+                    items.append("<truncated>")
+                else:
+                    items = [self._serialize_recursive(x, depth + 1, seen) for x in obj]
+                    
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": type(obj).__name__,
+                    "value": items
+                }
 
             # Sets
             if isinstance(obj, set):
                 items = list(obj)
+                val_items = []
                 if len(items) > self.max_length:
-                    return {
-                        "__type": "set",
-                        "items": [
-                            self._serialize_recursive(x, depth + 1, seen)
-                            for x in items[: self.max_length]
-                        ]
-                        + [f"<truncated, total {len(items)}>"],
-                    }
+                    val_items = [self._serialize_recursive(x, depth + 1, seen) for x in items[: self.max_length]]
+                    val_items.append("<truncated>")
+                else:
+                    val_items = [self._serialize_recursive(x, depth + 1, seen) for x in items]
+                    
                 return {
-                    "__type": "set",
-                    "items": [
-                        self._serialize_recursive(x, depth + 1, seen) for x in items
-                    ],
+                    "__ref__": hex(obj_id),
+                    "__type__": "set",
+                    "value": val_items
                 }
 
             # Dicts
@@ -69,53 +72,68 @@ class Serializer:
                 result = {}
                 keys = list(obj.keys())
                 if len(keys) > self.max_length:
-                    # serialize first N
                     for k in keys[: self.max_length]:
-                        k_str = str(k)
-                        result[k_str] = self._serialize_recursive(
-                            obj[k], depth + 1, seen
-                        )
+                        result[str(k)] = self._serialize_recursive(obj[k], depth + 1, seen)
                     result["__truncated"] = f"total {len(keys)}"
                 else:
                     for k, v in obj.items():
-                        k_str = str(k)
-                        result[k_str] = self._serialize_recursive(v, depth + 1, seen)
-                return result
+                        result[str(k)] = self._serialize_recursive(v, depth + 1, seen)
+                        
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": "dict",
+                    "value": result
+                }
 
             # Functions / Modules
             if isinstance(
                 obj, (types.FunctionType, types.MethodType, types.ModuleType)
             ):
-                return f"<{type(obj).__name__} {obj.__name__}>"
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": type(obj).__name__,
+                    "value": f"{obj.__name__}"
+                }
 
             # Generators / Iterators
             if isinstance(obj, types.GeneratorType):
-                return f"<generator {obj.__name__}>"
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": "generator",
+                    "value": f"{obj.__name__}"
+                }
 
             # Bytes / Bytearray
             if isinstance(obj, bytes):
-                if len(obj) > 50:
-                    return f"b'{obj[:50].hex()}...' ({len(obj)} bytes)"
-                return f"b'{obj.hex()}'"
+                val = f"b'{obj[:50].hex()}...' ({len(obj)} bytes)" if len(obj) > 50 else f"b'{obj.hex()}'"
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": type(obj).__name__,
+                    "value": val
+                }
 
             if isinstance(obj, bytearray):
-                if len(obj) > 50:
-                    return f"bytearray({len(obj)} bytes)"
-                return f"bytearray({list(obj)})"
+                val = f"bytearray({len(obj)} bytes)" if len(obj) > 50 else f"bytearray({list(obj)})"
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": type(obj).__name__,
+                    "value": val
+                }
 
             # Range objects
             if isinstance(obj, range):
-                return f"range({obj.start}, {obj.stop}, {obj.step})"
+                return {
+                    "__ref__": hex(obj_id),
+                    "__type__": "range",
+                    "value": f"range({obj.start}, {obj.stop}, {obj.step})"
+                }
 
             # Custom Objects
             if hasattr(obj, "__dict__"):
                 return {
-                    "__type": type(obj).__name__,
-                    "__id": hex(obj_id),
-                    "repr": str(obj),
-                    "attributes": self._serialize_recursive(
-                        obj.__dict__, depth + 1, seen
-                    ),
+                    "__ref__": hex(obj_id),
+                    "__type__": type(obj).__name__,
+                    "value": self._serialize_recursive(obj.__dict__, depth + 1, seen)
                 }
 
             # fallback

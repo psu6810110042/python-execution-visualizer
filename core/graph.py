@@ -15,13 +15,16 @@ class DataGraph(StencilView):
         # Colors
         self.c_bg = get_color_from_hex("#1e1e1e")
         self.c_frame_bg = get_color_from_hex("#252526")
-        self.c_frame_border = get_color_from_hex("#3e3e42")
+        self.c_frame_border = get_color_from_hex("#444444")
         self.c_heap_bg = get_color_from_hex("#2d2d30")
-        self.c_text = get_color_from_hex("#d4d4d4")
-        self.c_type = get_color_from_hex("#569cd6")
+        self.c_text = get_color_from_hex("#e0e0e0")
+        self.c_type_list = get_color_from_hex("#dcdcaa") # Yellowish
+        self.c_type_dict = get_color_from_hex("#c586c0") # Purplish
+        self.c_type_other = get_color_from_hex("#569cd6") # Blueish
         self.c_string = get_color_from_hex("#ce9178")
         self.c_number = get_color_from_hex("#b5cea8")
         self.c_pointer = get_color_from_hex("#58a6ff")
+        self.c_null = get_color_from_hex("#858585")
 
     def build_graph(self, local_vars, global_vars):
         """Called every step to update the visualization data."""
@@ -78,9 +81,9 @@ class DataGraph(StencilView):
         }
         
         # Constants
-        PADDING = 20
-        FRAME_W = 180
-        ROW_H = 30
+        PADDING = 40
+        FRAME_W = 260
+        ROW_H = 45
         
         # 1. Layout Frames (Left side)
         cur_y = self.top - PADDING
@@ -88,7 +91,7 @@ class DataGraph(StencilView):
             if not frame_vars:
                 continue
                 
-            frame_h = ROW_H + (len(frame_vars) * ROW_H)
+            frame_h = ROW_H + (len(frame_vars) * ROW_H) + 10
             metrics["frames"][frame_name] = {
                 "x": self.x + PADDING,
                 "y": cur_y - frame_h,
@@ -99,8 +102,8 @@ class DataGraph(StencilView):
             cur_y -= frame_h + PADDING
 
         # 2. Layout Heap Objects (Right side)
-        HEAP_START_X = self.x + PADDING + FRAME_W + 50
-        HEAP_MIN_W = 120
+        HEAP_START_X = self.x + PADDING + FRAME_W + 80
+        HEAP_MIN_W = 150
         cur_y = self.top - PADDING
         
         for ref_id, obj in self.heap_data.items():
@@ -108,17 +111,19 @@ class DataGraph(StencilView):
             val = obj.get("value")
             
             # Calculate height based on type
-            h = ROW_H * 2 # Header + at least one row
+            h = ROW_H + 20 # Header
             w = HEAP_MIN_W
             
             if obj_type in ("list", "tuple", "set"):
                 if isinstance(val, list):
-                    h = ROW_H + (len(val) * ROW_H)
+                    w = max(HEAP_MIN_W, len(val) * 75)
+                    h += ROW_H
             elif obj_type == "dict":
                 if isinstance(val, dict):
-                    # +1 for header
                     keys = [k for k in val.keys() if k != "__truncated__"]
-                    h = ROW_H + (len(keys) * ROW_H)
+                    h += max(1, len(keys)) * ROW_H
+            else:
+                 h += ROW_H
             
             metrics["heap"][ref_id] = {
                 "x": HEAP_START_X,
@@ -149,38 +154,40 @@ class DataGraph(StencilView):
         Color(*self.c_frame_bg)
         Rectangle(pos=(m["x"], m["y"]), size=(m["w"], m["h"]))
         Color(*self.c_frame_border)
-        Line(rectangle=(m["x"], m["y"], m["w"], m["h"]), width=1)
+        Line(rectangle=(m["x"], m["y"], m["w"], m["h"]), width=1.8)
         
         # Frame Title
-        self._draw_text(name, m["x"] + 5, m["y"] + m["h"] - 25, self.c_text, bold=True)
+        Color(*self.c_bg)
+        Rectangle(pos=(m["x"], m["y"] + m["h"] - 45), size=(m["w"], 45))
+        self._draw_text(name, m["x"] + 15, m["y"] + m["h"] - 32, self.c_text, bold=True, size=18)
+        Color(*self.c_frame_border)
+        Line(points=[m["x"], m["y"] + m["h"] - 45, m["x"] + m["w"], m["y"] + m["h"] - 45], width=1.8)
         
         # Variables
-        var_y = m["y"] + m["h"] - 55
+        var_y = m["y"] + m["h"] - 85
         for var_name, var_val in m["vars"].items():
             # Var Name
-            self._draw_text(var_name, m["x"] + 10, var_y, self.c_text)
+            self._draw_text(var_name, m["x"] + 20, var_y, self.c_text, size=18)
             
             # Pointer Connection Point calculation
-            val_x = m["x"] + m["w"] - 60
+            val_x = m["x"] + m["w"] - 90
             
             if isinstance(var_val, dict) and "__ref__" in var_val:
-                # It's a pointer to the heap
                 ref_id = var_val["__ref__"]
-                self._draw_text("   \u25CF", val_x, var_y, self.c_pointer) # Dot
+                self._draw_text("   \u25CF", val_x, var_y - 2, self.c_pointer, size=24) 
                 
-                # Add pointer request
                 if ref_id in all_metrics["heap"]:
                     all_metrics["pointers"].append({
-                        "start": (m["x"] + m["w"] - 10, var_y + 10),
+                        "start": (m["x"] + m["w"] - 20, var_y + 15),
                         "end_ref": ref_id
                     })
             else:
-                # It's a primitive value
                 val_str = str(var_val)
                 c = self.c_string if isinstance(var_val, str) else self.c_number
-                self._draw_text(val_str[:15], val_x, var_y, c)
+                if val_str == "None": c = self.c_null
+                self._draw_text(val_str[:15], val_x, var_y, c, size=18)
                 
-            var_y -= 30
+            var_y -= 45
 
     def _draw_heap_object(self, ref_id, m, all_metrics):
         obj = m["obj"]
@@ -191,20 +198,30 @@ class DataGraph(StencilView):
         Color(*self.c_heap_bg)
         Rectangle(pos=(m["x"], m["y"]), size=(m["w"], m["h"]))
         Color(*self.c_frame_border)
-        Line(rectangle=(m["x"], m["y"], m["w"], m["h"]), width=1)
+        Line(rectangle=(m["x"], m["y"], m["w"], m["h"]), width=1.8)
         
-        # Header (Type)
-        Color(0.2, 0.4, 0.6, 1) # Blueish header
-        Rectangle(pos=(m["x"], m["y"] + m["h"] - 30), size=(m["w"], 30))
-        self._draw_text(f"{obj_type}", m["x"] + 5, m["y"] + m["h"] - 25, (1,1,1,1), bold=True)
+        # Header Color based on Type
+        header_color = self.c_type_other
+        if obj_type in ("list", "tuple", "set"):
+            header_color = self.c_type_list
+        elif obj_type == "dict":
+            header_color = self.c_type_dict
+            
+        Color(*header_color)
+        header_h = 45
+        Rectangle(pos=(m["x"], m["y"] + m["h"] - header_h), size=(m["w"], header_h))
+        self._draw_text(f"{obj_type}", m["x"] + 12, m["y"] + m["h"] - 32, (0.1, 0.1, 0.1, 1), bold=True, size=18)
         
-        # Content Slots
-        content_y = m["y"] + m["h"] - 60
-        ROW_H = 30
+        # Draw ID ref in header
+        id_str = str(ref_id)[-4:]  # Last 4 chars of hex
+        self._draw_text(f"id:{id_str}", m["x"] + m["w"] - 75, m["y"] + m["h"] - 30, (0.2, 0.2, 0.2, 0.8), size=14)
+        
+        content_y = m["y"] + m["h"] - header_h - 38
+        ROW_H = 45
         
         if obj_type in ("list", "tuple", "set") and isinstance(val, list):
             # Draw Horizontal slots
-            slot_w = min(40, max(20, m["w"] / max(1, len(val))))
+            slot_w = m["w"] / max(1, len(val))
             
             for i, item in enumerate(val):
                 slot_x = m["x"] + (i * slot_w)
@@ -212,20 +229,26 @@ class DataGraph(StencilView):
                 # Draw separating lines
                 if i > 0:
                     Color(*self.c_frame_border)
-                    Line(points=[slot_x, content_y - ROW_H + 30, slot_x, content_y + 30], width=1)
+                    Line(points=[slot_x, content_y - 5, slot_x, content_y + ROW_H - 5], width=1.5)
+                
+                # Draw index small text below box
+                self._draw_text(str(i), slot_x + slot_w/2 - 5, content_y - 25, self.c_null, size=14)
                 
                 if item == "<truncated>":
-                    self._draw_text("...", slot_x + 5, content_y, self.c_text)
+                    self._draw_text("...", slot_x + slot_w/2 - 12, content_y, self.c_text, size=18)
                 elif isinstance(item, dict) and "__ref__" in item:
                     # Pointer from array slot
-                    self._draw_text("\u25CF", slot_x + slot_w/2 - 5, content_y, self.c_pointer)
+                    self._draw_text("\u25CF", slot_x + slot_w/2 - 8, content_y, self.c_pointer, size=24)
                     if item["__ref__"] in all_metrics["heap"]:
                         all_metrics["pointers"].append({
-                            "start": (slot_x + slot_w/2, content_y + 10),
+                            "start": (slot_x + slot_w/2 + 2, content_y + 15),
                             "end_ref": item["__ref__"]
                         })
                 else:
-                    self._draw_text(str(item)[:5], slot_x + 2, content_y, self.c_number)
+                    v_str = str(item)
+                    c = self.c_string if isinstance(item, str) else self.c_number
+                    if v_str == "None": c = self.c_null
+                    self._draw_text(v_str[:8], slot_x + 10, content_y, c, size=18)
                 
         elif obj_type == "dict" and isinstance(val, dict):
             # Key Value rows
@@ -235,55 +258,60 @@ class DataGraph(StencilView):
                     
                 # Dict key box
                 Color(0.15, 0.15, 0.15, 1)
-                Rectangle(pos=(m["x"], content_y), size=(40, ROW_H))
-                self._draw_text(str(k)[:5], m["x"] + 5, content_y + 5, self.c_string)
+                Rectangle(pos=(m["x"], content_y - 5), size=(75, ROW_H))
+                self._draw_text(str(k)[:7], m["x"] + 12, content_y + 2, self.c_string, size=18)
                 
                 # Dict value
                 if isinstance(v, dict) and "__ref__" in v:
-                    self._draw_text("\u25CF", m["x"] + 60, content_y + 5, self.c_pointer)
+                    self._draw_text("\u25CF", m["x"] + 100, content_y, self.c_pointer, size=24)
                     if v["__ref__"] in all_metrics["heap"]:
                         all_metrics["pointers"].append({
-                            "start": (m["x"] + 70, content_y + 15),
+                            "start": (m["x"] + 110, content_y + 15),
                             "end_ref": v["__ref__"]
                         })
                 else:
-                    self._draw_text(str(v)[:10], m["x"] + 50, content_y + 5, self.c_number)
+                    v_str = str(v)
+                    c = self.c_string if isinstance(v, str) else self.c_number
+                    if v_str == "None": c = self.c_null
+                    self._draw_text(v_str[:12], m["x"] + 90, content_y + 2, c, size=18)
                 
                 # Row separator
                 Color(*self.c_frame_border)
-                Line(points=[m["x"], content_y, m["x"] + m["w"], content_y], width=1)
+                Line(points=[m["x"], content_y - 5, m["x"] + m["w"], content_y - 5], width=1.5)
                 
                 content_y -= ROW_H
         else:
             # Render simple value representation
-            self._draw_text(str(val)[:15], m["x"] + 10, content_y, self.c_number)
+            self._draw_text(str(val)[:20], m["x"] + 20, content_y, self.c_number, size=18)
 
     def _draw_pointers(self, metrics):
-        Color(*self.c_pointer)
         for p in metrics["pointers"]:
             start_x, start_y = p["start"]
             target = metrics["heap"].get(p["end_ref"])
             
             if target:
-                # Target top left
                 end_x = target["x"]
-                end_y = target["y"] + target["h"] - 15
+                # Point to middle left edge of the target bounding box
+                end_y = target["y"] + (target["h"] / 2)
                 
-                # Draw bezier curve connecting the two points
-                # Control points for a smooth curve flowing left to right
-                cp1_x = start_x + 30
+                cp1_x = start_x + 60
                 cp1_y = start_y
-                cp2_x = end_x - 30
+                cp2_x = end_x - 60
                 cp2_y = end_y
                 
-                # Draw Line
-                Line(bezier=(start_x, start_y, cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y), width=1.5)
+                Color(*self.c_pointer)
+                # Ensure the line pops more by drawing a dark background line slightly thicker first
+                Color(0.1, 0.1, 0.1, 0.8)
+                Line(bezier=(start_x, start_y, cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y), width=4.0)
+                
+                Color(*self.c_pointer)
+                Line(bezier=(start_x, start_y, cp1_x, cp1_y, cp2_x, cp2_y, end_x, end_y), width=2.5)
                 
                 # Draw Arrowhead
-                Line(points=[end_x - 5, end_y - 5, end_x, end_y, end_x - 5, end_y + 5], width=1.5)
+                Line(points=[end_x - 12, end_y - 8, end_x, end_y, end_x - 12, end_y + 8], width=2.5)
 
-    def _draw_text(self, text, x, y, color, bold=False):
-        label = CoreLabel(text=str(text), font_name="RobotoMono-Regular", font_size=12, bold=bold)
+    def _draw_text(self, text, x, y, color, bold=False, size=12):
+        label = CoreLabel(text=str(text), font_name="RobotoMono-Regular", font_size=size, bold=bold)
         label.refresh()
         Color(*color)
         Rectangle(pos=(x, y), size=label.texture.size, texture=label.texture)

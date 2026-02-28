@@ -12,6 +12,7 @@ from kivymd.uix.menu import MDDropdownMenu
 from core.examples import EXAMPLES
 from core.executor import Executor
 from core.terminal import InteractiveTerminal
+from plyer import filechooser
 
 Builder.load_file("interface.kv")
 
@@ -28,6 +29,7 @@ class RootLayout(MDBoxLayout):
         self._original_code = ""
         self.play_event = None
         self._examples_menu = None
+        self.current_file_path = None
 
         Window.bind(on_keyboard=self._on_keyboard)
         # Track panel visible states
@@ -126,6 +128,50 @@ class RootLayout(MDBoxLayout):
         self.ids.code_input.readonly = False
         self.ids.code_input.text = code
         self.ids.code_input.focus = True
+        self.current_file_path = None
+
+    def show_load_dialog(self, _caller=None):
+        """Open a native file load dialog."""
+        filechooser.open_file(on_selection=self.load_file)
+
+    def load_file(self, selection):
+        if not selection:
+            return
+        path = selection[0]
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                code = f.read()
+            self.ids.code_input.readonly = False
+            self.ids.code_input.text = code
+            self.ids.code_input.focus = True
+            self.current_file_path = path
+        except Exception as e:
+            self._on_execution_error(f"Failed to load file: {e}")
+
+    def save_file(self, _caller=None):
+        if self.current_file_path:
+            try:
+                with open(self.current_file_path, "w", encoding="utf-8") as f:
+                    f.write(self.ids.code_input.text)
+            except Exception as e:
+                self._on_execution_error(f"Failed to save file: {e}")
+        else:
+            self.save_file_as()
+
+    def save_file_as(self, _caller=None):
+        """Open a native file save dialog."""
+        filechooser.save_file(on_selection=self._on_save_file_as_selection)
+
+    def _on_save_file_as_selection(self, selection):
+        if not selection:
+            return
+        path = selection[0]
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(self.ids.code_input.text)
+            self.current_file_path = path
+        except Exception as e:
+            self._on_execution_error(f"Failed to save file: {e}")
 
     def _setup_focus_borders(self):
         """Pre-create canvas border instructions for editor and terminal panels."""

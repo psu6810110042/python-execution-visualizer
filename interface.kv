@@ -99,9 +99,28 @@
 
         MDBoxLayout:
             size_hint_x: None
-            width: '36dp'
+            width: '120dp'
             size_hint_y: None
             height: '36dp'
+            spacing: '6dp'
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+
+                DarkIconButton:
+                    id: btn_load
+                    icon: 'folder-open'
+                    on_release: root.show_load_dialog(self)
+
+            AnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+
+                DarkIconButton:
+                    id: btn_save
+                    icon: 'content-save'
+                    on_release: root.save_file(self)
 
             AnchorLayout:
                 anchor_x: 'center'

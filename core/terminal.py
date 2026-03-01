@@ -143,6 +143,14 @@ class InteractiveTerminal(MDBoxLayout):
                     if root.trace_data:
                         root.toggle_play(root.ids.btn_play)
                     return True
+                elif key == 273:  # UP arrow -> increase speed
+                    slider = root.ids.speed_slider
+                    slider.value = min(slider.max, round(slider.value + 0.1, 1))
+                    return True
+                elif key == 274:  # DOWN arrow -> decrease speed
+                    slider = root.ids.speed_slider
+                    slider.value = max(slider.min, round(slider.value - 0.1, 1))
+                    return True
         except Exception:
             pass
 
@@ -153,7 +161,7 @@ class InteractiveTerminal(MDBoxLayout):
         if key_str in ['ctrl', 'lctrl', 'rctrl', 'alt', 'lalt', 'ralt', 'super', 'capslock', 'numlock', 'scrolllock']:
             return True
 
-        # Forward panel-toggle shortcuts to root even when terminal is focused
+        # Forward panel-toggle and font-size shortcuts to root even when terminal is focused
         if 'ctrl' in modifiers:
             from kivymd.app import MDApp
             root = MDApp.get_running_app().root
@@ -165,6 +173,16 @@ class InteractiveTerminal(MDBoxLayout):
                 return True
             if key == ord('2'):
                 root.toggle_panel('editor')
+                return True
+            # Font size: Ctrl+= / Ctrl++ increase, Ctrl+- decrease, Ctrl+0 reset
+            if key in (61, 43):  # '=' or '+'
+                root.change_font_size(+1)
+                return True
+            if key == 45:  # '-'
+                root.change_font_size(-1)
+                return True
+            if key == ord('0'):
+                root.reset_font_size()
                 return True
 
         # Determine VT sequence or character to send
@@ -442,3 +460,10 @@ class InteractiveTerminal(MDBoxLayout):
             self._executor.provide_input("")  # Unblock it if it was waiting
         self._executor = None
         self._input_buffer = ""
+
+    def set_font_size(self, size: int):
+        """Update the font size of the terminal display label."""
+        try:
+            self.ids.display.font_size = f"{size}sp"
+        except Exception:
+            pass

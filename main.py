@@ -20,6 +20,13 @@ Window.minimum_width = 400
 Window.minimum_height = 400
 
 
+# Default and current font sizes
+FONT_SIZE_DEFAULT_EDITOR = 14
+FONT_SIZE_DEFAULT_TERMINAL = 13
+FONT_SIZE_MIN = 8
+FONT_SIZE_MAX = 32
+
+
 class RootLayout(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -31,7 +38,14 @@ class RootLayout(MDBoxLayout):
         self._examples_menu = None
         self.current_file_path = None
 
+        # Font size state
+        self._editor_font_size = FONT_SIZE_DEFAULT_EDITOR
+        self._terminal_font_size = FONT_SIZE_DEFAULT_TERMINAL
+        # Track which panel is currently focused for per-panel font zoom
+        self._focused_panel = "editor"  # 'editor' | 'terminal'
+
         Window.bind(on_keyboard=self._on_keyboard)
+        Window.bind(on_mouse_scroll=self._on_mouse_scroll)
         # Track panel visible states
         self._panel_visible = {"terminal": True, "right": True}
 
@@ -54,6 +68,21 @@ class RootLayout(MDBoxLayout):
         if key == ord("2") and "ctrl" in modifiers:
             self.toggle_panel("editor")
             return True
+
+        # Font size shortcuts
+        if "ctrl" in modifiers:
+            # Ctrl+= or Ctrl++ → increase font
+            if key in (61, 43):  # 61='=', 43='+'
+                self.change_font_size(+1)
+                return True
+            # Ctrl+- → decrease font
+            if key == 45:  # 45='-'
+                self.change_font_size(-1)
+                return True
+            # Ctrl+0 → reset font
+            if key == ord("0"):
+                self.reset_font_size()
+                return True
 
         if not self.ids.code_input.readonly:
             return False
@@ -219,8 +248,10 @@ class RootLayout(MDBoxLayout):
         UNFOCUSED = (0, 0, 0, 0)
         if self._editor_focus_color:
             self._editor_focus_color.rgba = FOCUSED if focused else UNFOCUSED
-        if focused and self._terminal_focus_color:
-            self._terminal_focus_color.rgba = UNFOCUSED
+        if focused:
+            self._focused_panel = "editor"
+            if self._terminal_focus_color:
+                self._terminal_focus_color.rgba = UNFOCUSED
 
     def set_terminal_focus(self, focused):
         """Toggle the focus border on the Terminal panel."""
@@ -228,8 +259,10 @@ class RootLayout(MDBoxLayout):
         UNFOCUSED = (0, 0, 0, 0)
         if self._terminal_focus_color:
             self._terminal_focus_color.rgba = FOCUSED if focused else UNFOCUSED
-        if focused and self._editor_focus_color:
-            self._editor_focus_color.rgba = UNFOCUSED
+        if focused:
+            self._focused_panel = "terminal"
+            if self._editor_focus_color:
+                self._editor_focus_color.rgba = UNFOCUSED
 
     def _sync_scroll(self, instance, value):
         self.ids.line_numbers.scroll_y = value
@@ -262,10 +295,11 @@ class RootLayout(MDBoxLayout):
             self.ids.btn_run_icon.icon = "rocket-launch"
             instance.md_bg_color = get_color_from_hex("#0e639c")
 
-            # Reset panel proportions to defaults regardless of toggle state
-            self.ids.editor_splitter.size_hint_y = 0.7
+            # Restore panel proportions to what they were before Run was pressed
+            saved = getattr(self, "_saved_panel_sizes", {})
+            self.ids.editor_splitter.size_hint_y = saved.get("editor_splitter_y", 0.7)
             self.ids.editor_splitter.opacity = 1
-            self.ids.terminal_panel.size_hint_y = 1
+            self.ids.terminal_panel.size_hint_y = saved.get("terminal_panel_y", 1)
             self.ids.terminal_panel.opacity = 1
             self._panel_visible["terminal"] = True
             self._panel_visible["editor"] = True
@@ -299,6 +333,13 @@ class RootLayout(MDBoxLayout):
             self.toggle_play(None)
 
         self._original_code = code
+
+        # Save current panel proportions so we can restore them after Stop Edit
+        self._saved_panel_sizes = {
+            "editor_splitter_y": self.ids.editor_splitter.size_hint_y,
+            "terminal_panel_y": self.ids.terminal_panel.size_hint_y,
+        }
+
         self.ids.code_input.readonly = True
         self.ids.code_input.focus = False
 
@@ -536,6 +577,50 @@ class RootLayout(MDBoxLayout):
         new_step = self.current_step + delta
         if 0 <= new_step < len(self.trace_data):
             self.render_step(new_step)
+
+
+    def _on_mouse_scroll(self, window, x, y, scroll_x, scroll_y, modifiers=None):
+        """Ctrl+Scroll to change font size for the panel under the cursor."""
+        mods = getattr(window, "modifiers", []) or []
+        if "ctrl" not in mods or scroll_y == 0:
+            return
+        # Determine which panel the mouse is hovering over
+        delta = +1 if scroll_y > 0 else -1
+        panel = self._panel_at(x, y)
+        self.change_font_size(delta, target=panel)
+
+    def _panel_at(self, x, y):
+        """Return 'editor' or 'terminal' based on which panel contains (x, y)."""
+        term = self.ids.terminal_panel
+        if term.opacity > 0 and term.collide_point(x, y):
+            return "terminal"
+        return "editor"
+
+    def change_font_size(self, delta: int, target: str = None):
+        """Adjust font size for 'editor', 'terminal', or the currently focused panel."""
+        if target is None:
+            target = self._focused_panel
+        if target == "editor":
+            new_size = max(FONT_SIZE_MIN, min(FONT_SIZE_MAX, self._editor_font_size + delta))
+            self._apply_font_size(editor_size=new_size, terminal_size=None)
+        elif target == "terminal":
+            new_size = max(FONT_SIZE_MIN, min(FONT_SIZE_MAX, self._terminal_font_size + delta))
+            self._apply_font_size(editor_size=None, terminal_size=new_size)
+
+    def reset_font_size(self):
+        """Reset font size to default for both panels."""
+        self._apply_font_size(FONT_SIZE_DEFAULT_EDITOR, FONT_SIZE_DEFAULT_TERMINAL)
+
+    def _apply_font_size(self, editor_size, terminal_size):
+        if editor_size is not None:
+            self._editor_font_size = editor_size
+            self.ids.code_input.font_size = f"{editor_size}sp"
+            self.ids.line_numbers.font_size = f"{editor_size}sp"
+            self.ids.code_display.font_size = f"{editor_size}sp"
+            self.ids.trace_line_numbers.font_size = f"{editor_size}sp"
+        if terminal_size is not None:
+            self._terminal_font_size = terminal_size
+            self.ids.terminal_display.set_font_size(terminal_size)
 
 
 class PythonVisualizer(MDApp):

@@ -100,7 +100,7 @@
 
         MDBoxLayout:
             size_hint_x: None
-            width: '120dp'
+            width: '140dp'
             size_hint_y: None
             height: '36dp'
             spacing: '6dp'
@@ -275,6 +275,14 @@
                                 theme_text_color: "Custom"
                                 text_color: utils.get_color_from_hex('#858585')
                                 padding: "15dp", "0dp", "0dp", "0dp"
+                            MDIconButton:
+                                icon: 'content-copy'
+                                icon_size: '14sp'
+                                size_hint: None, None
+                                size: '24dp', '24dp'
+                                theme_icon_color: "Custom"
+                                icon_color: utils.get_color_from_hex('#858585')
+                                on_release: root.copy_code()
                             MDIconButton:
                                 icon: 'chevron-down'
                                 icon_size: '14sp'

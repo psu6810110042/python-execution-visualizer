@@ -13,6 +13,7 @@ from core.examples import EXAMPLES
 from core.executor import Executor
 from core.terminal import InteractiveTerminal
 from plyer import filechooser
+from kivy.core.clipboard import Clipboard
 
 Builder.load_file("interface.kv")
 
@@ -161,6 +162,11 @@ class RootLayout(MDBoxLayout):
         else:
             self._examples_menu.caller = caller
         self._examples_menu.open()
+
+    def copy_code(self):
+        """Copies the code editor's text to the clipboard."""
+        code_to_copy = self._original_code if self.ids.code_input.readonly else self.ids.code_input.text
+        Clipboard.copy(code_to_copy)
 
     def load_example(self, index):
         """Load the selected example into the code editor."""

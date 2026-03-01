@@ -26,10 +26,23 @@ class DataGraph(StencilView):
         self.c_pointer = get_color_from_hex("#58a6ff")
         self.c_null = get_color_from_hex("#858585")
 
-    def build_graph(self, local_vars, global_vars):
+    def build_graph(self, local_vars, global_vars, prev_local_vars=None, prev_global_vars=None):
         """Called every step to update the visualization data."""
         self.frame_data = {"Globals": global_vars, "Locals": local_vars}
         self.heap_data = {}
+        
+        # Compute changed variables for highlighting
+        self.changed_vars = {"Globals": set(), "Locals": set()}
+        
+        if prev_global_vars is not None:
+            for k, v in global_vars.items():
+                if k not in prev_global_vars or prev_global_vars[k] != v:
+                    self.changed_vars["Globals"].add(k)
+                    
+        if prev_local_vars is not None:
+            for k, v in local_vars.items():
+                if k not in prev_local_vars or prev_local_vars[k] != v:
+                    self.changed_vars["Locals"].add(k)
         
         # Extract heap objects (anything with __ref__)
         self._extract_heap(local_vars)
@@ -244,6 +257,11 @@ class DataGraph(StencilView):
         # Variables
         var_y = m["y"] + m["h"] - 85
         for var_name, var_val in m["vars"].items():
+            # Highlight background if changed
+            if var_name in self.changed_vars.get(name, set()):
+                Color(0.8, 0.8, 0.2, 0.2)  # Subtle yellow highlight
+                Rectangle(pos=(m["x"] + 2, var_y - 12), size=(m["w"] - 4, 30))
+
             # Var Name
             self._draw_text(var_name, m["x"] + 20, var_y, self.c_text, size=18)
             

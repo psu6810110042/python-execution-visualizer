@@ -417,8 +417,22 @@ class RootLayout(MDBoxLayout):
 
         self._render_code_trace(state)
 
+        self._render_code_trace(state)
+
         # Trigger graph draw instead of text
-        self.ids.data_graph_display.build_graph(state.locals, state.globals)
+        prev_locals = None
+        prev_globals = None
+        if self.current_step > 0:
+            prev_state = self.trace_data[self.current_step - 1]
+            prev_locals = prev_state.locals
+            prev_globals = prev_state.globals
+            
+        self.ids.data_graph_display.build_graph(
+            state.locals, 
+            state.globals, 
+            prev_local_vars=prev_locals, 
+            prev_global_vars=prev_globals
+        )
 
         self._render_call_stack(state)
 

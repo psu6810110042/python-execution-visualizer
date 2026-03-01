@@ -69,6 +69,11 @@ class RootLayout(MDBoxLayout):
             self.toggle_panel("editor")
             return True
 
+        # Ctrl+R → restart terminal
+        if key == ord("r") and "ctrl" in modifiers:
+            self.restart_terminal()
+            return True
+
         # Font size shortcuts
         if "ctrl" in modifiers:
             # Ctrl+= or Ctrl++ → increase font
@@ -130,6 +135,13 @@ class RootLayout(MDBoxLayout):
         # Start the backend shell process
         self.ids.terminal_display.start_shell()
         self.ids.terminal_display.on_focus_changed = self.set_terminal_focus
+
+    def restart_terminal(self):
+        """Restarts the background terminal shell."""
+        term = self.ids.terminal_display
+        term.stop_shell()
+        term.output_text = ""
+        term.start_shell()
 
     def open_examples_menu(self, caller):
         """Build (once) and open the built-in examples dropdown menu."""

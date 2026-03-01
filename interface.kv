@@ -384,6 +384,14 @@
                             text_color: utils.get_color_from_hex('#858585')
                             padding: "15dp", "0dp", "0dp", "0dp"
                         MDIconButton:
+                            icon: 'refresh'
+                            icon_size: '14sp'
+                            size_hint: None, None
+                            size: '24dp', '24dp'
+                            theme_icon_color: "Custom"
+                            icon_color: utils.get_color_from_hex('#858585')
+                            on_release: root.restart_terminal()
+                        MDIconButton:
                             id: terminal_toggle_btn
                             icon: 'chevron-down'
                             icon_size: '14sp'

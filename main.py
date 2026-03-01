@@ -455,13 +455,20 @@ class RootLayout(MDBoxLayout):
         for i, raw_line in enumerate(code_lines):
             line_no = i + 1
             safe_line = escape_markup(raw_line)
+            
+            # Badge logic: place on the left side, aligned nicely
+            badge = "    " # default padding so numbers align
+            if hasattr(state, "line_count") and state.line_count > 1 and line_no == state.line_number:
+                # e.g., " 3x "
+                badge_str = f"{state.line_count}x"
+                badge = f"[size=10sp][color=#555555]{badge_str:>{4}}[/color][/size]"
 
             if line_no == state.line_number:
                 color = "#ff5555" if state.event == "exception" else "#a6e22e"
-                trace_nums.append(f"[color={color}]►[/color] {line_no}")
+                trace_nums.append(f"{badge} [color={color}]►[/color] {line_no}")
                 rendered_code += f"[b][color={color}]{safe_line}[/color][/b]\n"
             else:
-                trace_nums.append(f"{line_no}")
+                trace_nums.append(f"{badge}   {line_no}")
                 rendered_code += f"{safe_line}\n"
 
         self.ids.code_display.text = rendered_code.rstrip("\n")

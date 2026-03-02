@@ -260,7 +260,7 @@ class DataGraph(StencilView):
             # Highlight background if changed
             if var_name in self.changed_vars.get(name, set()):
                 Color(0.8, 0.8, 0.2, 0.2)  # Subtle yellow highlight
-                Rectangle(pos=(m["x"] + 2, var_y - 12), size=(m["w"] - 4, 30))
+                Rectangle(pos=(m["x"] + 2, var_y - 5), size=(m["w"] - 4, 30))
 
             # Var Name
             self._draw_text(var_name, m["x"] + 20, var_y, self.c_text, size=18)

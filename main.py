@@ -475,18 +475,20 @@ class RootLayout(MDBoxLayout):
             safe_line = escape_markup(raw_line)
             
             # Badge logic: place on the left side, aligned nicely
-            badge = "    " # default padding so numbers align
+            badge = "\xa0\xa0\xa0\xa0" # default padding so numbers align
             if hasattr(state, "line_count") and state.line_count > 1 and line_no == state.line_number:
                 # e.g., " 3x "
-                badge_str = f"{state.line_count}x"
-                badge = f"[size=10sp][color=#555555]{badge_str:>{4}}[/color][/size]"
+                badge_str = f"{state.line_count}x".rjust(4).replace(" ", "\xa0")
+                badge = f"[size=10sp][color=#555555]{badge_str}[/color][/size]"
 
             if line_no == state.line_number:
                 color = "#ff5555" if state.event == "exception" else "#a6e22e"
-                trace_nums.append(f"{badge} [color={color}]►[/color] {line_no}")
+                no_str = f"{line_no:3}".replace(" ", "\xa0")
+                trace_nums.append(f"{badge}\xa0[color={color}]►[/color]\xa0{no_str}")
                 rendered_code += f"[b][color={color}]{safe_line}[/color][/b]\n"
             else:
-                trace_nums.append(f"{badge}   {line_no}")
+                no_str = f"{line_no:3}".replace(" ", "\xa0")
+                trace_nums.append(f"{badge}\xa0\xa0\xa0{no_str}")
                 rendered_code += f"{safe_line}\n"
 
         self.ids.code_display.text = rendered_code.rstrip("\n")

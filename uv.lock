@@ -224,7 +224,7 @@ dependencies = [
     { name = "kivymd" },
     { name = "plyer" },
     { name = "pygments" },
-    { name = "pyobjus" },
+    { name = "pyobjus", marker = "sys_platform == 'darwin'" },
     { name = "pyte" },
     { name = "pywinpty", marker = "sys_platform == 'win32'" },
 ]
@@ -245,7 +245,7 @@ requires-dist = [
     { name = "kivymd", url = "https://github.com/kivymd/KivyMD/archive/master.zip" },
     { name = "plyer", specifier = ">=2.1.0" },
     { name = "pygments", specifier = ">=2.19.2" },
-    { name = "pyobjus", specifier = ">=1.2.4" },
+    { name = "pyobjus", marker = "sys_platform == 'darwin'" },
     { name = "pyte", specifier = ">=0.8.2" },
     { name = "pywinpty", marker = "sys_platform == 'win32'", specifier = ">=3.0.3" },
 ]

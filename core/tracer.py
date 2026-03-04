@@ -32,7 +32,7 @@ class ExecutionState:
 
 
 class Tracer:
-    def __init__(self, stdout_buffer=None, max_steps=10000, stop_event=None):
+    def __init__(self, stdout_buffer=None, max_steps=10000, stop_event=None, on_step=None):
         self.trace_data = []
         self.serializer = Serializer()
         self.stdout_buffer = stdout_buffer
@@ -41,6 +41,7 @@ class Tracer:
         self.step_count = 0
         self.limit_reached = False
         self.stop_event = stop_event
+        self.on_step = on_step
 
     def trace(self, frame, event, arg):
         if self.limit_reached or (self.stop_event and self.stop_event.is_set()):
@@ -109,6 +110,9 @@ class Tracer:
         )
 
         self.trace_data.append(state)
+        
+        if self.on_step:
+            self.on_step(state)
         self.step_count += 1
         if self.step_count >= self.max_steps:
             self.limit_reached = True
@@ -117,6 +121,13 @@ class Tracer:
             )
 
         return self.trace
+
+    def refresh_stdout(self):
+        """Manually update the stdout of the current step and notify listener."""
+        if self.trace_data and self.stdout_buffer and self.on_step:
+            state = self.trace_data[-1]
+            state.stdout = self.stdout_buffer.getvalue()
+            self.on_step(state)
 
     def get_trace(self):
         return self.trace_data

@@ -196,7 +196,7 @@ class InteractiveTerminal(MDBoxLayout):
         elif key == 280: vt_seq = "\x1b[5~" # PAGE UP
         elif key == 281: vt_seq = "\x1b[6~" # PAGE DOWN
         # Special keys
-        elif key == 8: 
+        elif key in (8, 127): 
             if os.name == "nt": vt_seq = "\x08" # Windows expects BS
             else: vt_seq = "\x7f" # Unix expects DEL for Backspace
         elif key == 13: # ENTER / RETURN
@@ -231,15 +231,26 @@ class InteractiveTerminal(MDBoxLayout):
                 # submit buffer
                 cmd = self._input_buffer
                 self._input_buffer = ""
-                self._append_output("\r\n")
+                # We don't write to executor.tracer.stdout_buffer here because 
+                # python's input() will echo it back when it receives it anyway.
                 self._executor.provide_input(cmd)
-            elif data == "\x08": # bs
+            elif data in ("\x08", "\x7f"): # backspace / del
                 if len(self._input_buffer) > 0:
                     self._input_buffer = self._input_buffer[:-1]
-                    self._append_output("\x08 \x08")
+                    # Direct buffer manipulation for better sync
+                    if self._executor.tracer and self._executor.tracer.stdout_buffer:
+                        buf = self._executor.tracer.stdout_buffer
+                        content = buf.getvalue()
+                        buf.truncate(0)
+                        buf.seek(0)
+                        buf.write(content[:-1])
+                        self._executor.tracer.refresh_stdout()
             else:
                 self._input_buffer += data
-                self._append_output(data)
+                # Feed the typed character into the tracer's stdout buffer so it shows up in real-time
+                if self._executor.tracer and self._executor.tracer.stdout_buffer:
+                    self._executor.tracer.stdout_buffer.write(data)
+                    self._executor.tracer.refresh_stdout()
             return
 
         # Normal PTY processing
@@ -259,6 +270,16 @@ class InteractiveTerminal(MDBoxLayout):
             self._executor.stop()
         else:
             self._write_to_pty("\x03")
+
+    def sync_with_stdout(self, text):
+        """Resets the emulator state to match the exact full string provided."""
+        self._screen.reset()
+        self._screen.history.top.clear()
+        self._screen.history.bottom.clear()
+        # Convert all newlines to CRLF for proper terminal display
+        text = text.replace('\r\n', '\n').replace('\n', '\r\n')
+        self._stream.feed(text)
+        self._render_screen()
 
     def start_shell(self):
         """Starts a background shell process using a pseudo-terminal (pty)."""

@@ -374,8 +374,10 @@ class RootLayout(MDBoxLayout):
     def _run_in_thread(self, code):
         try:
             executor = Executor(
-                code=code, timeout=60.0
-            )  # increased timeout for manual inputs
+                code=code, 
+                timeout=60.0,
+                on_step=lambda state: Clock.schedule_once(lambda dt: self._on_new_step(state))
+            )
             # Register executor with terminal so we can type stuff in matching input()
             self.ids.terminal_display.register_executor(executor)
             result = executor.execute()
@@ -386,23 +388,35 @@ class RootLayout(MDBoxLayout):
             self.ids.terminal_display.unregister_executor()
 
     @mainthread
-    def _on_execution_finished(self, result):
-        self.trace_data = result.get("steps", [])
+    def _on_new_step(self, state):
+        """Called whenever a new execution step is captured."""
+        self.trace_data.append(state)
+        
+        # If we are currently at the end of the trace (or it's the first step), 
+        # auto-advance visualization to this new step.
+        max_step = len(self.trace_data) - 1
+        self.ids.step_scrubber.max = max(1, max_step)
+        self.ids.step_scrubber.disabled = False
+        
+        # If the user is currently at the latest step, or hasn't started yet, follow along
+        if self.current_step == max_step - 1 or max_step == 0:
+            self.render_step(max_step)
 
+    @mainthread
+    def _on_execution_finished(self, result):
         if not self.trace_data:
             err = result.get("error", "Trace failed or no steps captured.")
             self.ids.terminal_display.output_text += f"\n{err}"
             return
 
         max_step = max(1, len(self.trace_data) - 1)
-
         self.ids.step_scrubber.max = max_step
-        self.ids.step_scrubber.value = 0
         self.ids.step_scrubber.disabled = False
 
-        self.render_step(0)
-
         if not self.is_playing:
+            # If there's an error at the end, show it
+            if result.get("error"):
+                self.ids.terminal_display.output_text += f"\n{result['error']}"
             self.toggle_play(None)
 
     @mainthread
@@ -441,7 +455,7 @@ class RootLayout(MDBoxLayout):
 
         self._render_call_stack(state)
 
-        self.ids.terminal_display.output_text = state.stdout
+        self.ids.terminal_display.sync_with_stdout(state.stdout)
 
         if state.event == "exception" and state.exception:
             self.ids.error_banner.height = "40dp"

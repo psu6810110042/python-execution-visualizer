@@ -19,11 +19,13 @@ class Executor:
         inputs: list = None,
         timeout: float = 10.0,
         max_steps: int = 10000,
+        on_step=None,
     ):
         self.code = code
         self.inputs = inputs[:] if inputs else []
         self.timeout = timeout
         self.max_steps = max_steps
+        self.on_step = on_step
         self.tracer = None
         
         # dynamic input handling
@@ -51,11 +53,19 @@ class Executor:
 
         stdout_capture = io.StringIO()
         self._stop_event = threading.Event()
-        self.tracer = Tracer(stdout_buffer=stdout_capture, max_steps=self.max_steps, stop_event=self._stop_event)
+        self.tracer = Tracer(
+            stdout_buffer=stdout_capture, 
+            max_steps=self.max_steps, 
+            stop_event=self._stop_event,
+            on_step=self.on_step
+        )
         exec_globals = {}
 
         def mock_input(prompt=""):
             stdout_capture.write(prompt)
+            if self.tracer:
+                self.tracer.refresh_stdout()
+                
             if self.inputs:
                 value = str(self.inputs.pop(0))
             else:
@@ -67,7 +77,12 @@ class Executor:
                 value = self._current_input_value
                 self.waiting_for_input = False
                 
-            stdout_capture.write(value + "\n")
+            # The characters were already pushed to stdout_capture in real-time by terminal.py
+            # but we still need the newline to finish the input() line in the terminal view
+            stdout_capture.write("\n")
+            if self.tracer:
+                self.tracer.refresh_stdout()
+                
             return value
 
         exec_globals["input"] = mock_input

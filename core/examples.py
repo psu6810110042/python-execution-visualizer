@@ -116,4 +116,20 @@ EXAMPLES = [
             "print(f'Target {target} found at index: {result}')\n"
         ),
     },
+    {
+        "title": "Recursion — Fibonacci (Memoized)",
+        "code": (
+            "def fib_memo(n, memo={}):\n"
+            "    if n in memo:\n"
+            "        return memo[n]\n"
+            "    if n <= 1:\n"
+            "        return n\n"
+            "    memo[n] = fib_memo(n - 1, memo) + fib_memo(n - 2, memo)\n"
+            "    return memo[n]\n"
+            "\n"
+            "result = fib_memo(10)\n"
+            "print(f'fib(10) = {result}')\n"
+            "print('Memo contents:', sorted(fib_memo.__defaults__[0].items()))\n"
+        ),
+    },
 ]

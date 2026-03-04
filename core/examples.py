@@ -132,4 +132,22 @@ EXAMPLES = [
             "print('Memo contents:', sorted(fib_memo.__defaults__[0].items()))\n"
         ),
     },
+    {
+        "title": "Data Structure — Linked List Traversal",
+        "code": (
+            "class Node:\n"
+            "    def __init__(self, val):\n"
+            "        self.val = val\n"
+            "        self.next = None\n"
+            "\n"
+            "head = Node(1)\n"
+            "head.next = Node(2)\n"
+            "head.next.next = Node(3)\n"
+            "\n"
+            "current = head\n"
+            "while current:\n"
+            "    print(f'Node value: {current.val}')\n"
+            "    current = current.next\n"
+        ),
+    },
 ]

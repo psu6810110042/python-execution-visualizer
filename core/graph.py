@@ -18,9 +18,9 @@ class DataGraph(StencilView):
         self.c_frame_border = get_color_from_hex("#444444")
         self.c_heap_bg = get_color_from_hex("#2d2d30")
         self.c_text = get_color_from_hex("#e0e0e0")
-        self.c_type_list = get_color_from_hex("#dcdcaa") # Yellowish
-        self.c_type_dict = get_color_from_hex("#c586c0") # Purplish
-        self.c_type_other = get_color_from_hex("#569cd6") # Blueish
+        self.c_type_list = get_color_from_hex("#dcdcaa") 
+        self.c_type_dict = get_color_from_hex("#c586c0") 
+        self.c_type_other = get_color_from_hex("#569cd6")
         self.c_string = get_color_from_hex("#ce9178")
         self.c_number = get_color_from_hex("#b5cea8")
         self.c_pointer = get_color_from_hex("#58a6ff")
@@ -31,7 +31,6 @@ class DataGraph(StencilView):
         self.frame_data = {"Globals": global_vars, "Locals": local_vars}
         self.heap_data = {}
         
-        # Compute changed variables for highlighting
         self.changed_vars = {"Globals": set(), "Locals": set()}
         
         if prev_global_vars is not None:
@@ -44,7 +43,6 @@ class DataGraph(StencilView):
                 if k not in prev_local_vars or prev_local_vars[k] != v:
                     self.changed_vars["Locals"].add(k)
         
-        # Extract heap objects (anything with __ref__)
         self._extract_heap(local_vars)
         self._extract_heap(global_vars)
         self.update_canvas()
@@ -57,10 +55,8 @@ class DataGraph(StencilView):
         if isinstance(obj, dict) and "__ref__" in obj:
             ref_id = obj["__ref__"]
             if ref_id not in self.heap_data:
-                # Store it in our heap registry
                 self.heap_data[ref_id] = obj
                 
-                # Recursively extract from nested containers
                 if obj["__type__"] == "list" or obj["__type__"] == "set":
                     for item in obj["value"]:
                         if item != "<truncated>":
@@ -79,7 +75,6 @@ class DataGraph(StencilView):
         self.update_canvas()
 
     def update_canvas(self, *args):
-        # Prevent recursive size updates
         if getattr(self, '_updating_canvas', False):
             return
             
@@ -90,7 +85,6 @@ class DataGraph(StencilView):
             self._updating_canvas = False
             return
 
-        # 1. Calculate required dimensions with a dummy base_y
         metrics = self._calculate_layout(base_y=0)
         
         max_w = 0
@@ -118,23 +112,18 @@ class DataGraph(StencilView):
             size_changed = True
 
         if size_changed and args:
-            # If we were called by a pos/size binding and just changed size again,
-            # we should return and let Kivy trigger the next update_canvas
             self._updating_canvas = False
             return
 
         with self.canvas:
-            # Background
             Color(*self.c_bg)
             Rectangle(pos=self.pos, size=self.size)
 
-        # 2. Recalculate with actual bounds
         metrics = self._calculate_layout(base_y=self.top)
         self._draw_graph(metrics)
         self._updating_canvas = False
 
     def _calculate_layout(self, base_y):
-        # A very basic layout algorithm
         metrics = {
             "frames": {},
             "heap": {},
@@ -146,7 +135,6 @@ class DataGraph(StencilView):
         FRAME_W = 260
         ROW_H = 45
         
-        # 1. Layout Frames (Left side)
         cur_y = base_y - PADDING
         for frame_name, frame_vars in self.frame_data.items():
             if not frame_vars:
@@ -174,7 +162,6 @@ class DataGraph(StencilView):
             }
             cur_y -= frame_h + PADDING
 
-        # 2. Layout Heap Objects (Right side)
         HEAP_START_X = self.x + PADDING + FRAME_W + 200
         HEAP_MIN_W = 240
         cur_y = base_y - PADDING
@@ -229,15 +216,12 @@ class DataGraph(StencilView):
 
     def _draw_graph(self, metrics):
         with self.canvas:
-            # 1. Draw Frames
             for frame_name, frame_metrics in metrics["frames"].items():
                 self._draw_frame(frame_name, frame_metrics, metrics)
                 
-            # 2. Draw Heap Objects
             for ref_id, heap_metrics in metrics["heap"].items():
                 self._draw_heap_object(ref_id, heap_metrics, metrics)
                 
-            # 3. Draw Pointers (Lines)
             self._draw_pointers(metrics)
 
     def _draw_frame(self, name, m, all_metrics):

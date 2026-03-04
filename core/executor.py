@@ -90,11 +90,8 @@ class Executor:
         self._run_thread = threading.Thread(target=run_code)
         self._run_thread.start()
         
-        # We cannot just join with a fixed timeout anymore if we are waiting for input.
-        # So we poll the thread to see if it's done or if we've exceeded the pure execution timeout (excluding input waiting time)
         start_time = threading.Timer(0, lambda: None) # mock timer
         
-        # A simple polling loop that doesn't count `waiting_for_input` time towards the timeout
         exec_time = 0.0
         while self._run_thread.is_alive():
             time.sleep(0.1)
@@ -107,7 +104,6 @@ class Executor:
                 if exec_time >= self.timeout:
                     break
         
-        # Give the thread a moment to gracefully exit after the loop breaks
         self._run_thread.join(timeout=1.0)
         
         if self._run_thread.is_alive():

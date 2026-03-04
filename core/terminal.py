@@ -63,7 +63,7 @@ class InteractiveTerminal(MDBoxLayout):
         self._stop_event = threading.Event()
         self._executor = None
         self._keyboard = None
-        self.on_focus_changed = None  # Callback: fn(focused: bool)
+        self.on_focus_changed = None 
         
         # Pyte Emulator State
         self._lines = 24
@@ -107,8 +107,6 @@ class InteractiveTerminal(MDBoxLayout):
         return super().on_touch_down(touch)
 
     def _request_keyboard(self):
-        # Always release the old keyboard first (in case _keyboard_closed wasn't
-        # called, e.g. when code_input stole focus without going through our callback)
         if self._keyboard:
             self._keyboard.unbind(on_key_down=self._on_key_down)
             self._keyboard = None
@@ -128,7 +126,6 @@ class InteractiveTerminal(MDBoxLayout):
         key = keycode[0]
         key_str = keycode[1]
 
-        # When in visualization mode (code readonly), forward step-navigation keys to root
         try:
             from kivymd.app import MDApp
             root = MDApp.get_running_app().root
@@ -226,11 +223,7 @@ class InteractiveTerminal(MDBoxLayout):
         return True # Handled
 
     def _write_to_pty(self, data):
-        # Route to executor if it's waiting for input (basic intercept)
         if self._executor and self._executor.waiting_for_input:
-            # We don't echo to _append_output directly because we lack a full input() buffer,
-            # but wait, standard python input() blocks. We intercept char by char?
-            # Easiest: if executor expects input, we should accumulate until \\n.
             if not hasattr(self, '_input_buffer'):
                 self._input_buffer = ""
             
@@ -308,7 +301,6 @@ class InteractiveTerminal(MDBoxLayout):
         Clock.schedule_once(lambda dt: self._request_keyboard(), 0.5)
 
     def stop_shell(self):
-        """Stops the running shell."""
         self._stop_event.set()
 
         if os.name == "nt" and self._win_pty:
@@ -327,7 +319,6 @@ class InteractiveTerminal(MDBoxLayout):
                 self._master_fd = None
 
     def _read_unix_pty(self):
-        """Continuously reads output from the Unix shell pseudo-terminal."""
         while not self._stop_event.is_set() and self._master_fd is not None:
             r, _, _ = select.select([self._master_fd], [], [], 0.1)
             if self._master_fd in r:
@@ -343,7 +334,6 @@ class InteractiveTerminal(MDBoxLayout):
                     break
 
     def _read_windows_pty(self):
-        """Continuously reads output from the Windows winpty process."""
         while not self._stop_event.is_set() and self._win_pty is not None:
             try:
                 if self._win_pty.isalive():
@@ -438,7 +428,6 @@ class InteractiveTerminal(MDBoxLayout):
         self.ids.scroll_view.scroll_y = 0
 
     def restart_terminal(self):
-        """Forcefully stops the current shell and starts a fresh one."""
         self.stop_shell()
         self.clear()
         self.start_shell()
@@ -450,19 +439,16 @@ class InteractiveTerminal(MDBoxLayout):
         self._render_screen()
 
     def register_executor(self, executor_instance):
-        """Registers the active visualizer executor so we can route inputs to it."""
         self._executor = executor_instance
         self._input_buffer = ""
 
     def unregister_executor(self):
-        """Removes the visualizer executor."""
         if self._executor and self._executor.waiting_for_input:
             self._executor.provide_input("")  # Unblock it if it was waiting
         self._executor = None
         self._input_buffer = ""
 
     def set_font_size(self, size: int):
-        """Update the font size of the terminal display label."""
         try:
             self.ids.display.font_size = f"{size}sp"
         except Exception:

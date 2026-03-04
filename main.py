@@ -42,12 +42,10 @@ class RootLayout(MDBoxLayout):
         # Font size state
         self._editor_font_size = FONT_SIZE_DEFAULT_EDITOR
         self._terminal_font_size = FONT_SIZE_DEFAULT_TERMINAL
-        # Track which panel is currently focused for per-panel font zoom
         self._focused_panel = "editor"  # 'editor' | 'terminal'
 
         Window.bind(on_keyboard=self._on_keyboard)
         Window.bind(on_mouse_scroll=self._on_mouse_scroll)
-        # Track panel visible states
         self._panel_visible = {"terminal": True, "right": True}
 
     def _on_keyboard(self, window, key, scancode, codepoint, modifiers):
@@ -55,12 +53,10 @@ class RootLayout(MDBoxLayout):
             self.start_visualization(self.ids.btn_run)
             return True
 
-        # Ctrl+1 → toggle terminal panel
         if key == ord("1") and "ctrl" in modifiers:
             self.toggle_panel("terminal")
             return True
 
-        # Ctrl+` (backtick, key 96) → toggle right panel
         if key == 96 and "ctrl" in modifiers:
             self.toggle_panel("right")
             return True
@@ -138,14 +134,12 @@ class RootLayout(MDBoxLayout):
         self.ids.terminal_display.on_focus_changed = self.set_terminal_focus
 
     def restart_terminal(self):
-        """Restarts the background terminal shell."""
         term = self.ids.terminal_display
         term.stop_shell()
         term.output_text = ""
         term.start_shell()
 
     def open_examples_menu(self, caller):
-        """Build (once) and open the built-in examples dropdown menu."""
         if self._examples_menu is None:
             items = [
                 {
@@ -164,12 +158,10 @@ class RootLayout(MDBoxLayout):
         self._examples_menu.open()
 
     def copy_code(self):
-        """Copies the code editor's text to the clipboard."""
         code_to_copy = self._original_code if self.ids.code_input.readonly else self.ids.code_input.text
         Clipboard.copy(code_to_copy)
 
     def load_example(self, index):
-        """Load the selected example into the code editor."""
         self._examples_menu.dismiss()
         code = EXAMPLES[index]["code"]
         self.ids.code_input.readonly = False
@@ -178,7 +170,6 @@ class RootLayout(MDBoxLayout):
         self.current_file_path = None
 
     def show_load_dialog(self, _caller=None):
-        """Open a native file load dialog."""
         filechooser.open_file(on_selection=self.load_file)
 
     def load_file(self, selection):
@@ -206,7 +197,6 @@ class RootLayout(MDBoxLayout):
             self.save_file_as()
 
     def save_file_as(self, _caller=None):
-        """Open a native file save dialog."""
         filechooser.save_file(on_selection=self._on_save_file_as_selection)
 
     def _on_save_file_as_selection(self, selection):
@@ -221,7 +211,6 @@ class RootLayout(MDBoxLayout):
             self._on_execution_error(f"Failed to save file: {e}")
 
     def _setup_focus_borders(self):
-        """Pre-create canvas border instructions for editor and terminal panels."""
         UNFOCUSED = (0, 0, 0, 0)
         # Editor panel border
         panel = self.ids.editor_panel
@@ -261,7 +250,6 @@ class RootLayout(MDBoxLayout):
             )
 
     def set_editor_focus(self, focused):
-        """Toggle the focus border on the Code Editor panel."""
         FOCUSED = get_color_from_hex("#007fd4")
         UNFOCUSED = (0, 0, 0, 0)
         if self._editor_focus_color:
@@ -272,7 +260,6 @@ class RootLayout(MDBoxLayout):
                 self._terminal_focus_color.rgba = UNFOCUSED
 
     def set_terminal_focus(self, focused):
-        """Toggle the focus border on the Terminal panel."""
         FOCUSED = get_color_from_hex("#007fd4")
         UNFOCUSED = (0, 0, 0, 0)
         if self._terminal_focus_color:
@@ -474,7 +461,6 @@ class RootLayout(MDBoxLayout):
             line_no = i + 1
             safe_line = escape_markup(raw_line)
             
-            # Badge logic: place on the left side, aligned nicely
             badge = "\xa0\xa0\xa0\xa0" # default padding so numbers align
             if hasattr(state, "line_count") and state.line_count > 1 and line_no == state.line_number:
                 # e.g., " 3x "
@@ -557,7 +543,6 @@ class RootLayout(MDBoxLayout):
             self.toggle_play(None)  # Auto pause at end
 
     def toggle_panel(self, panel_name):
-        """Show or hide a named panel by toggling size_hint and opacity."""
         visible = self._panel_visible.get(panel_name, True)
         new_visible = not visible
         self._panel_visible[panel_name] = new_visible
@@ -567,13 +552,11 @@ class RootLayout(MDBoxLayout):
             btn = self.ids.terminal_toggle_btn
             editor = self.ids.editor_splitter
             if new_visible:
-                # Restore both: terminal fills remaining space, editor goes back to 70%
                 panel.size_hint_y = 1
                 panel.opacity = 1
                 editor.size_hint_y = 0.7
                 btn.icon = "chevron-down"
             else:
-                # Hide terminal and let editor expand to full height
                 panel.size_hint_y = None
                 panel.height = 0
                 panel.opacity = 0
@@ -594,10 +577,8 @@ class RootLayout(MDBoxLayout):
                 splitter.size_hint_x = 1
 
         elif panel_name == "editor":
-            # The editor_splitter is a LoadSplitter — hiding it by collapsing size_hint_y
             editor = self.ids.editor_splitter
             terminal = self.ids.terminal_panel
-            # new_visible was already computed at top of this method
             if new_visible:
                 editor.size_hint_y = 0.7
                 editor.opacity = 1
@@ -621,7 +602,6 @@ class RootLayout(MDBoxLayout):
 
 
     def _on_mouse_scroll(self, window, x, y, scroll_x, scroll_y, modifiers=None):
-        """Ctrl+Scroll to change font size for the panel under the cursor."""
         mods = getattr(window, "modifiers", []) or []
         if "ctrl" not in mods or scroll_y == 0:
             return
@@ -631,14 +611,12 @@ class RootLayout(MDBoxLayout):
         self.change_font_size(delta, target=panel)
 
     def _panel_at(self, x, y):
-        """Return 'editor' or 'terminal' based on which panel contains (x, y)."""
         term = self.ids.terminal_panel
         if term.opacity > 0 and term.collide_point(x, y):
             return "terminal"
         return "editor"
 
     def change_font_size(self, delta: int, target: str = None):
-        """Adjust font size for 'editor', 'terminal', or the currently focused panel."""
         if target is None:
             target = self._focused_panel
         if target == "editor":
@@ -649,7 +627,6 @@ class RootLayout(MDBoxLayout):
             self._apply_font_size(editor_size=None, terminal_size=new_size)
 
     def reset_font_size(self):
-        """Reset font size to default for both panels."""
         self._apply_font_size(FONT_SIZE_DEFAULT_EDITOR, FONT_SIZE_DEFAULT_TERMINAL)
 
     def _apply_font_size(self, editor_size, terminal_size):

@@ -68,6 +68,7 @@ class Executor:
                 
             if self.inputs:
                 value = str(self.inputs.pop(0))
+                stdout_capture.write(value + "\n")
             else:
                 # Block and wait for dynamic UI input
                 self.waiting_for_input = True
@@ -77,9 +78,10 @@ class Executor:
                 value = self._current_input_value
                 self.waiting_for_input = False
                 
-            # The characters were already pushed to stdout_capture in real-time by terminal.py
-            # but we still need the newline to finish the input() line in the terminal view
-            stdout_capture.write("\n")
+                # The characters were already pushed to stdout_capture in real-time by terminal.py
+                # but we still need the newline to finish the input() line in the terminal view
+                stdout_capture.write("\n")
+                
             if self.tracer:
                 self.tracer.refresh_stdout()
                 

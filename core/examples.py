@@ -78,4 +78,20 @@ EXAMPLES = [
             "print('Even squares:', even_squares)\n"
         ),
     },
+    {
+        "title": "Primes - Sieve of Eratosthenes",
+        "code": (
+            "def sieve(n):\n"
+            "    primes = [True] * (n + 1)\n"
+            "    primes[0] = primes[1] = False\n"
+            "    for p in range(2, int(n**0.5) + 1):\n"
+            "        if primes[p]:\n"
+            "            for i in range(p * p, n + 1, p):\n"
+            "                primes[i] = False\n"
+            "    return [p for p, is_prime in enumerate(primes) if is_prime]\n"
+            "\n"
+            "result = sieve(30)\n"
+            "print('Primes up to 30:', result)\n"
+        ),
+    },
 ]

@@ -78,4 +78,94 @@ EXAMPLES = [
             "print('Even squares:', even_squares)\n"
         ),
     },
+    {
+        "title": "Primes - Sieve of Eratosthenes",
+        "code": (
+            "def sieve(n):\n"
+            "    primes = [True] * (n + 1)\n"
+            "    primes[0] = primes[1] = False\n"
+            "    for p in range(2, int(n**0.5) + 1):\n"
+            "        if primes[p]:\n"
+            "            for i in range(p * p, n + 1, p):\n"
+            "                primes[i] = False\n"
+            "    return [p for p, is_prime in enumerate(primes) if is_prime]\n"
+            "\n"
+            "result = sieve(30)\n"
+            "print('Primes up to 30:', result)\n"
+        ),
+    },
+    {
+        "title": "Algorithm — Binary Search",
+        "code": (
+            "def binary_search(arr, x):\n"
+            "    low = 0\n"
+            "    high = len(arr) - 1\n"
+            "    while low <= high:\n"
+            "        mid = (high + low) // 2\n"
+            "        if arr[mid] < x:\n"
+            "            low = mid + 1\n"
+            "        elif arr[mid] > x:\n"
+            "            high = mid - 1\n"
+            "        else:\n"
+            "            return mid\n"
+            "    return -1\n"
+            "\n"
+            "data = [2, 3, 4, 10, 40]\n"
+            "target = 10\n"
+            "result = binary_search(data, target)\n"
+            "print(f'Target {target} found at index: {result}')\n"
+        ),
+    },
+    {
+        "title": "Recursion — Fibonacci (Memoized)",
+        "code": (
+            "def fib_memo(n, memo={}):\n"
+            "    if n in memo:\n"
+            "        return memo[n]\n"
+            "    if n <= 1:\n"
+            "        return n\n"
+            "    memo[n] = fib_memo(n - 1, memo) + fib_memo(n - 2, memo)\n"
+            "    return memo[n]\n"
+            "\n"
+            "result = fib_memo(10)\n"
+            "print(f'fib(10) = {result}')\n"
+            "print('Memo contents:', sorted(fib_memo.__defaults__[0].items()))\n"
+        ),
+    },
+    {
+        "title": "Data Structure — Linked List Traversal",
+        "code": (
+            "class Node:\n"
+            "    def __init__(self, val):\n"
+            "        self.val = val\n"
+            "        self.next = None\n"
+            "\n"
+            "head = Node(1)\n"
+            "head.next = Node(2)\n"
+            "head.next.next = Node(3)\n"
+            "\n"
+            "current = head\n"
+            "while current:\n"
+            "    print(f'Node value: {current.val}')\n"
+            "    current = current.next\n"
+        ),
+    },
+    {
+        "title": "Decorator — Logging Wrapper",
+        "code": (
+            "def logger(func):\n"
+            "    def wrapper(*args, **kwargs):\n"
+            "        print(f'Calling {func.__name__}...')\n"
+            "        result = func(*args, **kwargs)\n"
+            "        print(f'{func.__name__} finished.')\n"
+            "        return result\n"
+            "    return wrapper\n"
+            "\n"
+            "@logger\n"
+            "def say_hello(name):\n"
+            "    print(f'Hello, {name}!')\n"
+            "\n"
+            "say_hello('User')\n"
+        ),
+    },
 ]

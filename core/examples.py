@@ -150,4 +150,22 @@ EXAMPLES = [
             "    current = current.next\n"
         ),
     },
+    {
+        "title": "Decorator — Logging Wrapper",
+        "code": (
+            "def logger(func):\n"
+            "    def wrapper(*args, **kwargs):\n"
+            "        print(f'Calling {func.__name__}...')\n"
+            "        result = func(*args, **kwargs)\n"
+            "        print(f'{func.__name__} finished.')\n"
+            "        return result\n"
+            "    return wrapper\n"
+            "\n"
+            "@logger\n"
+            "def say_hello(name):\n"
+            "    print(f'Hello, {name}!')\n"
+            "\n"
+            "say_hello('User')\n"
+        ),
+    },
 ]

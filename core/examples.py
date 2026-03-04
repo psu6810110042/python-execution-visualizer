@@ -94,4 +94,26 @@ EXAMPLES = [
             "print('Primes up to 30:', result)\n"
         ),
     },
+    {
+        "title": "Algorithm — Binary Search",
+        "code": (
+            "def binary_search(arr, x):\n"
+            "    low = 0\n"
+            "    high = len(arr) - 1\n"
+            "    while low <= high:\n"
+            "        mid = (high + low) // 2\n"
+            "        if arr[mid] < x:\n"
+            "            low = mid + 1\n"
+            "        elif arr[mid] > x:\n"
+            "            high = mid - 1\n"
+            "        else:\n"
+            "            return mid\n"
+            "    return -1\n"
+            "\n"
+            "data = [2, 3, 4, 10, 40]\n"
+            "target = 10\n"
+            "result = binary_search(data, target)\n"
+            "print(f'Target {target} found at index: {result}')\n"
+        ),
+    },
 ]

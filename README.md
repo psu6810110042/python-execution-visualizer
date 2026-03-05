@@ -125,6 +125,7 @@
     - พัฒนาส่วนประกอบสำคัญอย่าง Tracer และ Serializer สำหรับตรวจสอบสถานะโปรแกรม
     - ออกแบบและปรับปรุง GUI/UX โดยใช้ KivyMD (Material Design) เพื่อความสวยงามและใช้งานง่าย
     - วางรากฐานระบบ Execution และความปลอดภัยในการรันโค้ด
+    - สร้าง tests สำหรับ core features ใช้ได้ด้วยคำสั่ง ``uv run pytest -v``
 
 - **Manattee Vilairat** ([@Manattee-vilairat](https://github.com/Manattee-vilairat))
     - พัฒนาฟีเจอร์การแสดงผลข้อมูลแบบ Diagram เพื่อให้เห็นโครงสร้างข้อมูลชัดเจน

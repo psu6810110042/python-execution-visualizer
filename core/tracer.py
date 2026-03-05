@@ -123,7 +123,6 @@ class Tracer:
         return self.trace
 
     def refresh_stdout(self):
-        """Manually update the stdout of the current step and notify listener."""
         if self.trace_data and self.stdout_buffer and self.on_step:
             state = self.trace_data[-1]
             state.stdout = self.stdout_buffer.getvalue()

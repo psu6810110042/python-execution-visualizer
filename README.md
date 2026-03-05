@@ -8,13 +8,13 @@
 
 ## Key Features
 
-- **แสดงผลแบบเรียลไทม์ (Real-time Visualization)**: ดูโค้ดทำงานทีละบรรทัดด้วยระบบ Tracing
-- **รองรับการรับข้อความจากผู้ใช้ (Interactive Input Support)**: สามารถพิมพ์ตอบสนองคำสั่ง `input()` ได้โดยตรงผ่าน Terminal ในตัว
-- **ตรวจสอบตัวแปร (Variable Inspection)**: ติดตามการเปลี่ยนแปลงของตัวแปร Local และ Global ในทุกๆ ขั้นตอน
-- **ติดตาม Call Stack (Call Stack Tracking)**: แสดงผล Stack ของฟังก์ชันที่กำลังทำงานและการสลับการทำงานระหว่าง Frame
-- **มี Terminal ในตัว (Integrated Terminal)**: โปรแกรมจำลอง Terminal ครบวงจรสำหรับแสดงผลลัพธ์ของโปรแกรมและให้ผู้ใช้โต้ตอบได้
-- **เลื่อนดูประวัติและการเล่นซ้ำ (Scrubbing & Playback)**: สามารถเลื่อนดูประวัติการทำงานของโปรแกรมเดินหน้าและถอยหลังได้
-- **วิเคราะห์การทำงาน (Execution Analytics)**: ติดตามได้ว่าแต่ละบรรทัดถูกเรียกใช้งานไปกี่ครั้ง
+- **Real-time Visualization**: ดูโค้ดทำงานทีละบรรทัดด้วยระบบ Tracing
+- **Interactive Input Support**: สามารถพิมพ์ตอบสนองคำสั่ง `input()` ได้โดยตรงผ่าน Terminal ในตัว
+- **Variable Inspection**: ติดตามการเปลี่ยนแปลงของตัวแปร Local และ Global ในทุกๆ ขั้นตอน
+- **Call Stack Tracking**: แสดงผล Stack ของฟังก์ชันที่กำลังทำงานและการสลับการทำงานระหว่าง Frame
+- **Integrated Terminal**: โปรแกรมจำลอง Terminal ครบวงจรสำหรับแสดงผลลัพธ์ของโปรแกรมและให้ผู้ใช้โต้ตอบได้
+- **Scrubbing & Playback**: สามารถเลื่อนดูประวัติการทำงานของโปรแกรมเดินหน้าและถอยหลังได้
+- **Execution Analytics**: ติดตามได้ว่าแต่ละบรรทัดถูกเรียกใช้งานไปกี่ครั้ง
 
 ## Architecture
 
@@ -31,7 +31,7 @@
 
 ## Technical Implementation Details
 
-### กลไกการรับ Input โต้ตอบ (Interactive Input Mechanism)
+### Interactive Input Mechanism
 หนึ่งในฟีเจอร์ที่ซับซ้อนที่สุดคือการรองรับการหยุดรอคำสั่ง `input()` แบบ Synchronous ภายใน UI ที่ทำงานแบบ Asynchronous
 1. เมื่อโค้ดถูกประมวลผลมาถึงคำสั่ง `input()` ระบบจะเรียกฟังก์ชัน `mock_input` ของเราใน Background Thread
 2. `mock_input` จะเขียนข้อความ Prompt ลงใน Buffer และหยุดรอ (Block) ด้วย `threading.Event`
@@ -39,7 +39,7 @@
 4. เมื่อผู้ใช้พิมพ์ตัวอักษรลงใน Terminal สัญญาณจะถูกสตรีมส่งกลับไปที่ Buffer ของ Tracer แบบเรียลไทม์เพื่อให้ UI ทั้งจอเกิดการอัปเดตตาม
 5. ทันทีที่ผู้ใช้กดปุ่ม **Enter** ระบบจะตั้งค่า `Event` เพื่อนำข้อความคืนกลับไปให้โปรแกรม Python และการทำงานก็จะดำเนินต่อไป
 
-### กลยุทธ์การซิงค์ข้อมูล Terminal (Terminal Sync Strategy)
+### Terminal Sync Strategy
 เพื่อให้หน้าตาของ Terminal แสดงผลได้สมบูรณ์ถูกต้องเสมอ (โดยเฉพาะระหว่างที่มีการรับ Input แบบเรียลไทม์) เราเลือกใช้กลยุทธ์ **Full Sync** หรือซิงค์ข้อมูลใหม่ทั้งหมด โดยแทนที่จะใช้วิธีนำข้อความมาต่อท้ายเรื่อย ๆ (Append) ตัว UI จะคอยเรียกคำสั่ง `sync_with_stdout(full_text)` ซึ่งจะล้างสถานะการจำลอง Terminal เดิมออกและป้อนประวัติการทำงานทั้งหมดเข้าไปใหม่เสมอ วิธีนี้จะป้องกันปัญหาข้อความเลื่อนตำแหน่งผิด และทำให้แน่ใจว่าการกด Backspace แก้ไขคำระหว่างรอ Input แสดงผลออกมาได้อย่างสมบูรณ์แบบ
 
 ## การเริ่มต้นใช้งาน 
@@ -47,6 +47,7 @@
 ### สิ่งที่ต้องมีเบื้องต้น
 - Python 3.10 ขึ้นไป
 - `uv` (แนะนำ) หรือ `pip`
+- ติดตั้ง `uv` ได้จากที่นี่ ([https://docs.astral.sh/uv/getting-started/installation/](https://docs.astral.sh/uv/getting-started/installation/))
 
 ### การติดตั้ง
 
@@ -56,11 +57,7 @@
    git clone https://github.com/psu6810110042/python-execution-visualizer.git
    cd python-execution-visualizer
    ```
-2. ติดตั้ง Dependencies:
-   ```bash
-   uv sync
-   ```
-3. การรันแอปพลิเคชัน:
+2. การรันแอปพลิเคชัน:
    ```bash
    uv run main.py
    ```
@@ -121,15 +118,10 @@
 - **ลูกศรขึ้น (Up Arrow)**: เพิ่มความเร็วในการเล่น (Speed Up)
 - **ลูกศรลง (Down Arrow)**: ลดความเร็วในการเล่น (Slow Down)
 
-## Contributing
-ยินดีต้อนรับทุกคนที่มีส่วนร่วมกับโปรเจกต์นี้! สามารถส่ง Pull Request เข้ามาได้เลยครับ
-
 ## Contributors
-
-โปรเจกต์นี้ได้รับการพัฒนาโดย:
-
 - **Jirakorn Sukmee** ([@psu6810110042](https://github.com/psu6810110042))
-    - ออกแบบสถาปัตยกรรมหลักของระบบ (Core Architecture)
+    - ออกแบบระบบ (Core Architecture)
+    - ทำระบบ Interactive Terminal ให้ใช้ได้สำหรับ Windows MacOS และ Linux
     - พัฒนาส่วนประกอบสำคัญอย่าง Tracer และ Serializer สำหรับตรวจสอบสถานะโปรแกรม
     - ออกแบบและปรับปรุง GUI/UX โดยใช้ KivyMD (Material Design) เพื่อความสวยงามและใช้งานง่าย
     - วางรากฐานระบบ Execution และความปลอดภัยในการรันโค้ด

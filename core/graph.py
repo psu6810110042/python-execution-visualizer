@@ -27,7 +27,6 @@ class DataGraph(StencilView):
         self.c_null = get_color_from_hex("#858585")
 
     def build_graph(self, local_vars, global_vars, prev_local_vars=None, prev_global_vars=None):
-        """Called every step to update the visualization data."""
         self.frame_data = {"Globals": global_vars, "Locals": local_vars}
         self.heap_data = {}
         

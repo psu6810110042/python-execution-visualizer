@@ -35,12 +35,10 @@ class Executor:
         self._run_thread = None
 
     def provide_input(self, value: str):
-        """Called by the UI to supply the input value and unblock the executor."""
         self._current_input_value = value
         self._input_event.set()
 
     def stop(self):
-        """Called by the UI (e.g., Ctrl+C) to terminate execution early."""
         if hasattr(self, '_stop_event'):
             self._stop_event.set()
         if getattr(self, 'tracer', None):
@@ -78,8 +76,6 @@ class Executor:
                 value = self._current_input_value
                 self.waiting_for_input = False
                 
-                # The characters were already pushed to stdout_capture in real-time by terminal.py
-                # but we still need the newline to finish the input() line in the terminal view
                 stdout_capture.write("\n")
                 
             if self.tracer:

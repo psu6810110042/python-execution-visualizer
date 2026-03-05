@@ -266,7 +266,6 @@ class InteractiveTerminal(MDBoxLayout):
             pass
 
     def send_interrupt(self):
-        """Sends a Ctrl+C (SIGINT) to the running process or visualizer."""
         self._append_output("^C\n")
 
         if self._executor:
@@ -275,7 +274,6 @@ class InteractiveTerminal(MDBoxLayout):
             self._write_to_pty("\x03")
 
     def sync_with_stdout(self, text):
-        """Resets the emulator state to match the exact full string provided."""
         self._screen.reset()
         self._screen.history.top.clear()
         self._screen.history.bottom.clear()
@@ -285,7 +283,6 @@ class InteractiveTerminal(MDBoxLayout):
         self._render_screen()
 
     def start_shell(self):
-        """Starts a background shell process using a pseudo-terminal (pty)."""
         if self._process is not None or self._win_pty is not None:
             return
 
@@ -439,9 +436,6 @@ class InteractiveTerminal(MDBoxLayout):
             line_buf = self._screen.buffer[y]
             # avoid pushing many empty trailing spaces
             lines.append(process_line(line_buf))
-
-        # We must add cursor block. For simplicity, just invert colors at screen.cursor.y, screen.cursor.x
-        # But for now, we leave it out or handle it correctly if pyte does it.
 
         self.output_text = "\n".join(lines)
         

@@ -181,6 +181,9 @@ class InteractiveTerminal(MDBoxLayout):
             if key == ord('0'):
                 root.reset_font_size()
                 return True
+            if key == ord('r'):
+                root.restart_terminal()
+                return True
 
         # Determine VT sequence or character to send
         vt_seq = None

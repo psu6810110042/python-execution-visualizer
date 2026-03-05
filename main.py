@@ -38,6 +38,7 @@ class RootLayout(MDBoxLayout):
         self.play_event = None
         self._examples_menu = None
         self.current_file_path = None
+        self.execution_finished = False
 
         # Font size state
         self._editor_font_size = FONT_SIZE_DEFAULT_EDITOR
@@ -338,6 +339,9 @@ class RootLayout(MDBoxLayout):
             self.toggle_play(None)
 
         self._original_code = code
+        self.trace_data = []
+        self.current_step = 0
+        self.execution_finished = False
 
         # Save current panel proportions so we can restore them after Stop Edit
         self._saved_panel_sizes = {
@@ -392,18 +396,18 @@ class RootLayout(MDBoxLayout):
         """Called whenever a new execution step is captured."""
         self.trace_data.append(state)
         
-        # If we are currently at the end of the trace (or it's the first step), 
-        # auto-advance visualization to this new step.
         max_step = len(self.trace_data) - 1
         self.ids.step_scrubber.max = max(1, max_step)
         self.ids.step_scrubber.disabled = False
         
-        # If the user is currently at the latest step, or hasn't started yet, follow along
-        if self.current_step == max_step - 1 or max_step == 0:
-            self.render_step(max_step)
+        if max_step == 0:
+            self.render_step(0)
+            if not self.is_playing:
+                self.toggle_play(None)
 
     @mainthread
     def _on_execution_finished(self, result):
+        self.execution_finished = True
         if not self.trace_data:
             err = result.get("error", "Trace failed or no steps captured.")
             self.ids.terminal_display.output_text += f"\n{err}"
@@ -413,14 +417,13 @@ class RootLayout(MDBoxLayout):
         self.ids.step_scrubber.max = max_step
         self.ids.step_scrubber.disabled = False
 
-        if not self.is_playing:
-            # If there's an error at the end, show it
-            if result.get("error"):
-                self.ids.terminal_display.output_text += f"\n{result['error']}"
-            self.toggle_play(None)
+        # If there's an error at the end, show it
+        if result.get("error"):
+            self.ids.terminal_display.output_text += f"\n{result['error']}"
 
     @mainthread
     def _on_execution_error(self, err_msg):
+        self.execution_finished = True
         self.ids.terminal_display.output_text = f"Execution Error: {err_msg}"
 
     def render_step(self, step_idx):
@@ -554,7 +557,8 @@ class RootLayout(MDBoxLayout):
         if self.current_step < len(self.trace_data) - 1:
             self.render_step(self.current_step + 1)
         else:
-            self.toggle_play(None)  # Auto pause at end
+            if getattr(self, "execution_finished", False):
+                self.toggle_play(None)  # Auto pause at end
 
     def toggle_panel(self, panel_name):
         visible = self._panel_visible.get(panel_name, True)

@@ -1,80 +1,141 @@
 # Python Execution Visualizer
 
-A powerful, real-time Python code visualization tool built with Kivy and KivyMD. This application allows developers and learners to walk through Python code step-by-step, observing variable states, the call stack, and terminal output in real-time.
+เครื่องมือแสดงผลการทำงานของโค้ด Python แบบ Real-time สร้างขึ้นด้วย Kivy และ KivyMD แอปพลิเคชันนี้ทำให้นักพัฒนาและผู้เรียนสามารถไล่ดูการทำงานของโค้ด Python ได้ทีละบรรทัด พร้อมสังเกตสถานะของตัวแปร , Call Stack และผลลัพธ์บน Terminal ได้แบบ Real-time
 
-![UI Overview](https://via.placeholder.com/800x450?text=Python+Execution+Visualizer+UI)
+## UI Overview
 
-## 🚀 Key Features
+![Program Overview](images/image1.png)
 
-- **Real-time Visualization**: Watch code execute line-by-line with high-performance tracing.
-- **Interactive Input Support**: Handle `input()` calls directly from the built-in terminal.
-- **Variable Inspection**: Track local and global variable changes at every step.
-- **Call Stack Tracking**: Visualize the active function stack and frame transitions.
-- **Integrated Terminal**: A full-featured terminal emulator for program output and user interaction.
-- **Scrubbing & Playback**: Move backwards and forwards through the execution history.
-- **Execution Analytics**: Track how many times each line was executed (execution badge).
+## Key Features
 
-## 🏗️ Architecture
+- **แสดงผลแบบเรียลไทม์ (Real-time Visualization)**: ดูโค้ดทำงานทีละบรรทัดด้วยระบบ Tracing
+- **รองรับการรับข้อความจากผู้ใช้ (Interactive Input Support)**: สามารถพิมพ์ตอบสนองคำสั่ง `input()` ได้โดยตรงผ่าน Terminal ในตัว
+- **ตรวจสอบตัวแปร (Variable Inspection)**: ติดตามการเปลี่ยนแปลงของตัวแปร Local และ Global ในทุกๆ ขั้นตอน
+- **ติดตาม Call Stack (Call Stack Tracking)**: แสดงผล Stack ของฟังก์ชันที่กำลังทำงานและการสลับการทำงานระหว่าง Frame
+- **มี Terminal ในตัว (Integrated Terminal)**: โปรแกรมจำลอง Terminal ครบวงจรสำหรับแสดงผลลัพธ์ของโปรแกรมและให้ผู้ใช้โต้ตอบได้
+- **เลื่อนดูประวัติและการเล่นซ้ำ (Scrubbing & Playback)**: สามารถเลื่อนดูประวัติการทำงานของโปรแกรมเดินหน้าและถอยหลังได้ v
+- **วิเคราะห์การทำงาน (Execution Analytics)**: ติดตามได้ว่าแต่ละบรรทัดถูกเรียกใช้งานไปกี่ครั้ง
 
-The project is divided into a clear separation of concerns between the core execution engine and the graphical interface.
+## Architecture
 
-### Core Engine (`/core`)
-- **`tracer.py`**: Uses `sys.settrace` to instrument Python code. It captures line events, return values, call stack transitions, and serialized variable states. It features an `on_step` callback for streaming updates.
-- **`executor.py`**: Manages the execution environment. It handles code parsing, timeout enforcement, and provides a "mock" `input()` function that bridges the background execution thread with the UI terminal input.
-- **`terminal.py`**: Implements a terminal emulator using `pyte` and handles low-level PTY (pseudo-terminal) interactions for both Windows and Unix systems. It synchronizes its state with the tracer's stdout buffer.
+โปรเจกต์นี้มีการแยกส่วนการทำงานอย่างชัดเจนระหว่าง Core Execution Engine (ระบบประมวลผลหลัก) และ Graphical Interface (ส่วนแสดงผลทางหน้าจอ)
 
-### UI Layers (`/`)
-- **`main.py`**: The entry point and main application controller. It manages the Kivy event loop, thread safety (using `Clock.schedule_once`), and updates the UI components based on incoming trace steps.
-- **Kivy Layouts**: Uses a modular layout system for the code editor, variable tree, call stack, and terminal panels.
+### ระบบประมวลผลหลัก (`/core`)
+- **`tracer.py`**: ใช้ `sys.settrace` ในการฝังตัวเข้าไปในโค้ด Python เพื่อดักจับ Event การทำงานระดับบรรทัด, คืนค่า, การเปลี่ยน Call Stack และค่าของตัวแปรที่ถูก Serialize แล้ว โดยมี Callback `on_step` สำหรับส่งข้อมูลอัปเดตแบบ Streaming
+- **`executor.py`**: จัดการสภาพแวดล้อมการรันโค้ด จัดการเรื่องการ Parse โค้ด, การตัดการทำงานเมื่อเกินเวลา (Timeout) และมีฟังก์ชัน `input()` จำลองเพื่อเชื่อมโยง Background Thread ที่ใช้ประมวลผลเข้ากับ Terminal UI
+- **`terminal.py`**: จำลอง Terminal โดยใช้ `pyte` จัดการ PTY (Pseudo-terminal) ระดับล่างสำหรับทั้งระบบ Windows และ Unix และซิงค์สถานะเข้ากับข้อมูลใน Buffer ของ Tracer
 
-## 🛠️ Technical Implementation Details
+### ส่วนของ UI (`/`)
+- **`main.py`**: เป็น Entry Point และส่วนควบคุมหลักของแอปพลิเคชัน จัดการ Event Loop ของ Kivy, ควบคุม Thread Safety (ด้วย `Clock.schedule_once`) และอัปเดตองค์ประกอบของ UI ต่างๆ ตามสถานะ Trace ที่ถูกส่งเข้ามา
+- **Kivy Layouts**: ใช้ระบบ Layout แบบแบ่งโมดูล (Modular) สำหรับพื้นที่เขียนโค้ด (Code Editor), ต้นไม้ตัวแปร (Variable Tree), Call Stack, และ Panel ของ Terminal
 
-### Interactive Input Mechanism
-One of the most complex features is the synchronous `input()` support within an asynchronous UI.
-1. When the executed code calls `input()`, it triggers our `mock_input` function in a background thread.
-2. `mock_input` writes the prompt to the stdout buffer and blocks on a `threading.Event`.
-3. The UI detects the waiting state and focuses the terminal.
-4. As the user types in the terminal, characters are streamed back to the tracer's buffer and the UI is refreshed globally.
-5. Upon pressing **Enter**, the `Event` is set, the value is returned to the Python program, and execution continues.
+## Technical Implementation Details
 
-### Terminal Sync Strategy
-To ensure the terminal always looks correct (especially during real-time input), we use a **Full Sync** strategy. Instead of just appending text, the UI calls `sync_with_stdout(full_text)`, which resets the terminal emulator and re-feeds the entire trace history. This prevents alignment issues and ensures that backspaces/edits during input are rendered perfectly.
+### กลไกการรับ Input โต้ตอบ (Interactive Input Mechanism)
+หนึ่งในฟีเจอร์ที่ซับซ้อนที่สุดคือการรองรับการหยุดรอคำสั่ง `input()` แบบ Synchronous ภายใน UI ที่ทำงานแบบ Asynchronous
+1. เมื่อโค้ดถูกประมวลผลมาถึงคำสั่ง `input()` ระบบจะเรียกฟังก์ชัน `mock_input` ของเราใน Background Thread
+2. `mock_input` จะเขียนข้อความ Prompt ลงใน Buffer และหยุดรอ (Block) ด้วย `threading.Event`
+3. UI จะตรวจจับสถานะว่าโปรแกรมกำลังรอผู้ใช้ป้อนข้อมูล และทำการโฟกัสไปยังหน้า Terminal 
+4. เมื่อผู้ใช้พิมพ์ตัวอักษรลงใน Terminal สัญญาณจะถูกสตรีมส่งกลับไปที่ Buffer ของ Tracer แบบเรียลไทม์เพื่อให้ UI ทั้งจอเกิดการอัปเดตตาม
+5. ทันทีที่ผู้ใช้กดปุ่ม **Enter** ระบบจะตั้งค่า `Event` เพื่อนำข้อความคืนกลับไปให้โปรแกรม Python และการทำงานก็จะดำเนินต่อไป
 
-## 🏃 Getting Started
+### กลยุทธ์การซิงค์ข้อมูล Terminal (Terminal Sync Strategy)
+เพื่อให้หน้าตาของ Terminal แสดงผลได้สมบูรณ์ถูกต้องเสมอ (โดยเฉพาะระหว่างที่มีการรับ Input แบบเรียลไทม์) เราเลือกใช้กลยุทธ์ **Full Sync** หรือซิงค์ข้อมูลใหม่ทั้งหมด โดยแทนที่จะใช้วิธีนำข้อความมาต่อท้ายเรื่อย ๆ (Append) ตัว UI จะคอยเรียกคำสั่ง `sync_with_stdout(full_text)` ซึ่งจะล้างสถานะการจำลอง Terminal เดิมออกและป้อนประวัติการทำงานทั้งหมดเข้าไปใหม่เสมอ วิธีนี้จะป้องกันปัญหาข้อความเลื่อนตำแหน่งผิด และทำให้แน่ใจว่าการกด Backspace แก้ไขคำระหว่างรอ Input แสดงผลออกมาได้อย่างสมบูรณ์แบบ
 
-### Prerequisites
-- Python 3.10+
-- `uv` (recommended) or `pip`
+## การเริ่มต้นใช้งาน 
 
-### Installation
-1. Clone the repository:
+### สิ่งที่ต้องมีเบื้องต้น
+- Python 3.10 ขึ้นไป
+- `uv` (แนะนำ) หรือ `pip`
+
+### การติดตั้ง
+
+#### วิธีที่ 1: ใช้ `uv` (แนะนำ)
+1. Clone โปรเจกต์:
    ```bash
-   git clone https://github.com/yourusername/python-execution-visualizer.git
+   git clone https://github.com/psu6810110042/python-execution-visualizer.git
    cd python-execution-visualizer
    ```
-2. Install dependencies:
+2. ติดตั้ง Dependencies:
    ```bash
    uv sync
    ```
+3. การรันแอปพลิเคชัน:
+   ```bash
+   uv run main.py
+   ```
 
-### Running the App
-```bash
-uv run main.py
-```
+#### วิธีที่ 2: ใช้ `pip`
+1. Clone โปรเจกต์:
+   ```bash
+   git clone https://github.com/psu6810110042/python-execution-visualizer.git
+   cd python-execution-visualizer
+   ```
+2. สร้างและเปิดใช้งาน Virtual Environment:
+   ```bash
+   # สำหรับ macOS/Linux
+   python3 -m venv .venv
+   source .venv/bin/activate
 
-## 📝 Example Code to Try
-Try running this in the visualizer to see the interactive input in action:
-```python
-def greet():
-    name = input("What is your name? ")
-    age = input("How old are you? ")
-    print(f"Hello {name}, you are {age}!")
+   # สำหรับ Windows
+   python -m venv .venv
+   .venv\Scripts\activate
+   ```
+3. ติดตั้ง Dependencies:
+   ```bash
+   pip install "kivy[base]>=2.3.1" pygments pyte docutils plyer
+   pip install https://github.com/kivymd/KivyMD/archive/master.zip
+   ```
+   > [!NOTE]
+   > หากอยู่บน Windows อาจจำเป็นต้องติดตั้ง dependencies เพิ่มเติมสำหรับ Kivy: `pip install kivy-deps.angle kivy-deps.glew kivy-deps.sdl2`
 
-greet()
-```
+4. การรันแอปพลิเคชัน:
+   ```bash
+   # Windows
+   python main.py
+   # macOS
+   python3 main.py หรือ python main.py
+   ```
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Commands & Hotkeys
 
-## 📜 License
-This project is licensed under the MIT License.
+### การควบคุมทั่วไป (General Controls)
+- **Ctrl + Enter**: เริ่มต้นการทำงาน (Run) หรือ หยุดการทำงานเพื่อแก้ไขโค้ด (Stop Edit)
+- **Ctrl + R**: เริ่มการทำงานของ Terminal ใหม่ (Restart Terminal)
+- **Space**: เล่น (Play) หรือ พัก (Pause) การแสดงผล (ใช้งานได้เมื่อรันโค้ดแล้ว)
+
+### การจัดการหน้าจอ (Panels Management)
+- **Ctrl + 1**: เปิด/ปิด หน้าจอ Terminal
+- **Ctrl + 2**: เปิด/ปิด หน้าจอ Code Editor (ขณะกำลัง Trace โค้ด)
+- **Ctrl + `** (ปุ่ม Grave Accent): เปิด/ปิด แผงควบคุมด้านขวา (Variable Tree & Call Stack)
+
+### การปรับแต่งการแสดงผล (Visual Settings)
+- **Ctrl + Mouse Scroll**: เพิ่ม/ลด ขนาดตัวอักษรในแผงที่เมาส์อยู่
+- **Ctrl + +** / **Ctrl + =**: เพิ่มขนาดตัวอักษร
+- **Ctrl + -**: ลดขนาดตัวอักษร
+- **Ctrl + 0**: คืนค่าตัวอักษรเป็นปกติ
+
+### การไล่โค้ด (Execution Control)
+- **ลูกศรขวา (Right Arrow)**: เลื่อนไปข้างหน้า 1 ขั้นตอน (Step Forward)
+- **ลูกศรซ้าย (Left Arrow)**: ย้อนกลับ 1 ขั้นตอน (Step Backward)
+- **ลูกศรขึ้น (Up Arrow)**: เพิ่มความเร็วในการเล่น (Speed Up)
+- **ลูกศรลง (Down Arrow)**: ลดความเร็วในการเล่น (Slow Down)
+
+## Contributing
+ยินดีต้อนรับทุกคนที่มีส่วนร่วมกับโปรเจกต์นี้! สามารถส่ง Pull Request เข้ามาได้เลยครับ
+
+## Contributors
+
+โปรเจกต์นี้ได้รับการพัฒนาโดย:
+
+- **Jirakorn Sukmee** ([@psu6810110042](https://github.com/psu6810110042))
+    - ออกแบบสถาปัตยกรรมหลักของระบบ (Core Architecture)
+    - พัฒนาส่วนประกอบสำคัญอย่าง Tracer และ Serializer สำหรับตรวจสอบสถานะโปรแกรม
+    - ออกแบบและปรับปรุง GUI/UX โดยใช้ KivyMD (Material Design) เพื่อความสวยงามและใช้งานง่าย
+    - วางรากฐานระบบ Execution และความปลอดภัยในการรันโค้ด
+
+- **Manattee Vilairat** ([@Manattee-vilairat](https://github.com/Manattee-vilairat))
+    - พัฒนาฟีเจอร์การแสดงผลข้อมูลแบบ Diagram เพื่อให้เห็นโครงสร้างข้อมูลชัดเจน
+    - ปรับปรุงระบบ Terminal ให้รองรับการโต้ตอบ (Input) และคำสั่งต่างๆ
+    - เพิ่มฟีเจอร์เสริมใน UI เช่น การปรับขนาดหน้าต่าง, แถบสถานะการเรียกใช้งานบรรทัด (Execution Count Badge) และการแจ้งเตือนการเปลี่ยนค่าตัวแปร
+    - รวบรวมและพัฒนาตัวอย่างอัลกอริทึม (Built-in Examples) สำหรับผู้เริ่มต้นใช้งาน

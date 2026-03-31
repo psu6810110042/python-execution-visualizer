@@ -242,7 +242,7 @@ requires-dist = [
     { name = "kivy-deps-glew", marker = "sys_platform == 'win32'", specifier = ">=0.3.1" },
     { name = "kivy-deps-gstreamer", marker = "sys_platform == 'win32'", specifier = ">=0.3.4" },
     { name = "kivy-deps-sdl2", marker = "sys_platform == 'win32'", specifier = ">=0.8.0" },
-    { name = "kivymd", url = "https://github.com/kivymd/KivyMD/archive/master.zip" },
+    { name = "kivymd", git = "https://github.com/kivymd/KivyMD.git?branch=master" },
     { name = "plyer", specifier = ">=2.1.0" },
     { name = "pygments", specifier = ">=2.19.2" },
     { name = "pyobjus", marker = "sys_platform == 'darwin'" },
@@ -301,7 +301,7 @@ wheels = [
 [[package]]
 name = "kivymd"
 version = "2.0.1.dev0"
-source = { url = "https://github.com/kivymd/KivyMD/archive/master.zip" }
+source = { git = "https://github.com/kivymd/KivyMD.git?branch=master#365aa9b96eee63e0e29c04de297dd222f478fce5" }
 dependencies = [
     { name = "asynckivy" },
     { name = "kivy" },
@@ -309,34 +309,6 @@ dependencies = [
     { name = "materialyoucolor" },
     { name = "pillow" },
 ]
-sdist = { hash = "sha256:033613238896799a6f7bb3fc451d2d8191515b3b8a0ea1e04682599b19dcf83e" }
-
-[package.metadata]
-requires-dist = [
-    { name = "astroid", marker = "extra == 'docs'", specifier = "<2.12" },
-    { name = "asynckivy", specifier = ">=0.6,<0.7" },
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "coveralls", marker = "extra == 'dev'" },
-    { name = "flake8", marker = "extra == 'dev'" },
-    { name = "isort", extras = ["pyproject"], marker = "extra == 'dev'" },
-    { name = "kivy", specifier = ">=2.3.0" },
-    { name = "materialshapes", specifier = ">=0.3" },
-    { name = "materialyoucolor", specifier = ">=2.0.7" },
-    { name = "pillow" },
-    { name = "pre-commit", marker = "extra == 'dev'" },
-    { name = "pyinstaller", extras = ["hook-testing"], marker = "extra == 'dev'" },
-    { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-timeout", marker = "extra == 'dev'" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = "==7.3.7" },
-    { name = "sphinx-autoapi", marker = "extra == 'docs'", specifier = "==3.0.0" },
-    { name = "sphinx-book-theme", marker = "extra == 'docs'" },
-    { name = "sphinx-copybutton", marker = "extra == 'docs'" },
-    { name = "sphinx-notfound-page", marker = "extra == 'docs'" },
-    { name = "sphinx-tabs", marker = "extra == 'docs'" },
-]
-provides-extras = ["dev", "docs"]
 
 [[package]]
 name = "materialshapes"
